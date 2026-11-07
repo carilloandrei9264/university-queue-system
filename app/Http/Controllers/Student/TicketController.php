@@ -15,13 +15,23 @@ class TicketController extends Controller
 {
     public function index(Request $request, TicketQueueService $queue): View
     {
+        return view('student.dashboard', $this->dashboardData($request, $queue));
+    }
+
+    public function refresh(Request $request, TicketQueueService $queue): View
+    {
+        return view('student._queue-status', $this->dashboardData($request, $queue));
+    }
+
+    private function dashboardData(Request $request, TicketQueueService $queue): array
+    {
         $activeTicket = Ticket::query()
             ->where('student_id', $request->user()->id)
             ->whereIn('status', ['waiting', 'serving'])
             ->with(['department', 'service'])
             ->first();
 
-        return view('student.dashboard', [
+        return [
             'departments' => Department::query()
                 ->where('is_active', true)
                 ->whereHas('services', fn ($query) => $query->where('is_active', true))
@@ -30,7 +40,7 @@ class TicketController extends Controller
                 ->get(),
             'activeTicket' => $activeTicket,
             'peopleAhead' => $activeTicket === null ? null : $queue->peopleAhead($activeTicket),
-        ]);
+        ];
     }
 
     public function store(Request $request, TicketQueueService $queue): RedirectResponse

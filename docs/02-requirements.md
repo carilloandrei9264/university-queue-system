@@ -62,7 +62,7 @@ Student, Staff (one department), Admin, Public screen (no login). See [00](00-pr
 
 | ID | Requirement | Pri | Acceptance criteria |
 |----|-------------|-----|---------------------|
-| STF-01 | Staff see only their own department's queue. | M | No control or data from another department is reachable. |
+| STF-01 | Staff see only their own department's queue. | M | No control or data from another department is reachable. The queue list refreshes automatically every 5 to 10 seconds without reloading the staff page. |
 | STF-02 | Staff can call the next waiting ticket in their department (oldest first). | M | Two staff calling at once never receive the same ticket. |
 | STF-03 | Staff can mark the serving ticket as completed. | M | Completion time is recorded. |
 | STF-04 | Staff can skip a no-show and recall a skipped ticket. | S | A skipped ticket can be recalled until the day ends. |

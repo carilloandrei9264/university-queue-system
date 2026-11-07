@@ -30,12 +30,14 @@ Route::middleware('auth')->group(function (): void {
 
     Route::prefix('student')->name('student.')->middleware('role:student')->group(function (): void {
         Route::get('/dashboard', [TicketController::class, 'index'])->name('dashboard');
+        Route::get('/queue-status', [TicketController::class, 'refresh'])->name('queue-status');
         Route::post('/tickets', [TicketController::class, 'store'])->name('tickets.store');
         Route::delete('/tickets/{ticket}', [TicketController::class, 'destroy'])->name('tickets.destroy');
     });
 
     Route::prefix('staff')->name('staff.')->middleware('role:staff')->group(function (): void {
         Route::get('/dashboard', [QueueController::class, 'index'])->name('dashboard');
+        Route::get('/queue-status', [QueueController::class, 'refresh'])->name('queue-status');
         Route::post('/call-next', [QueueController::class, 'callNext'])->name('call-next');
         Route::post('/tickets/{ticket}/complete', [QueueController::class, 'complete'])
             ->name('tickets.complete');

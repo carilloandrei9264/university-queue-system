@@ -14,18 +14,27 @@ class QueueController extends Controller
 {
     public function index(Request $request): View
     {
-        $queueDate = Carbon::now(config('app.timezone'))->toDateString();
-        $departmentId = $request->user()->department_id;
+        return view('staff.dashboard', $this->queueData($request));
+    }
 
-        return view('staff.dashboard', [
+    public function refresh(Request $request): View
+    {
+        return view('staff._queue', $this->queueData($request));
+    }
+
+    private function queueData(Request $request): array
+    {
+        $queueDate = Carbon::now(config('app.timezone'))->toDateString();
+
+        return [
             'tickets' => Ticket::query()
-                ->where('department_id', $departmentId)
+                ->where('department_id', $request->user()->department_id)
                 ->where('queue_date', $queueDate)
                 ->whereIn('status', ['waiting', 'serving', 'skipped'])
                 ->with(['department', 'service'])
                 ->orderBy('number')
                 ->get(),
-        ]);
+        ];
     }
 
     public function callNext(Request $request, TicketQueueService $queue): RedirectResponse

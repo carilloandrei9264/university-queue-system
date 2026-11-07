@@ -12,6 +12,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - Validation and feature tests for admin authorization, record management, and first-admin provisioning.
 - Student ticket creation and cancellation, plus staff call-next, complete, skip, and recall actions with transaction-locked daily numbering.
 - Public office queue displays with automatic refresh, showing the serving and next waiting ticket codes without student details.
+- Student ticket status and staff queue lists refresh automatically without reloading the page.
 
 ## [0.0.0] - 2026-11-06
 
