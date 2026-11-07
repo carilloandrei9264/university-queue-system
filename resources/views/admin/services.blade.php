@@ -11,11 +11,11 @@
             <select id="new-department" name="department_id" required>
                 <option value="">Choose a department</option>
                 @foreach ($departments->where('is_active', true) as $department)
-                    <option value="{{ $department->id }}">{{ $department->name }}</option>
+                    <option value="{{ $department->id }}" @selected(old('department_id') == $department->id)>{{ $department->name }}</option>
                 @endforeach
             </select>
             <label for="new-service">Service name</label>
-            <input id="new-service" name="name" type="text" maxlength="255" required>
+            <input id="new-service" name="name" type="text" maxlength="255" value="{{ old('name') }}" required>
             <input name="is_active" type="hidden" value="1">
             <button type="submit">Add service</button>
         </form>
@@ -49,7 +49,10 @@
                 </form>
             </div>
         @empty
-            <p>No services have been added.</p>
+            <div class="empty-state">
+                <h2>No services yet</h2>
+                <p>Add a service above so students can join an office queue.</p>
+            </div>
         @endforelse
     </section>
 @endsection

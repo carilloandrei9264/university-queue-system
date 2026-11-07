@@ -16,5 +16,6 @@
         <a class="button secondary" href="{{ route('display.index') }}">View office displays</a>
       </section>
     </main>
+    <script src="{{ asset('js/ui-states.js') }}" defer></script>
 </body>
 </html>

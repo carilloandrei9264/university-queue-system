@@ -7,6 +7,7 @@ use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -26,6 +27,16 @@ class AuthenticationTest extends TestCase
             ->assertOk()
             ->assertSee('Demo accounts are enabled for this local environment')
             ->assertSee('name="email"', false);
+    }
+
+    public function test_expired_session_has_a_sign_in_recovery_page(): void
+    {
+        Route::get('/test-session-expired', fn () => abort(419));
+
+        $this->get('/test-session-expired')
+            ->assertStatus(419)
+            ->assertSee('Please sign in again')
+            ->assertSee(route('login'), false);
     }
 
     public function test_a_demo_student_can_sign_in_and_reaches_the_student_dashboard(): void
@@ -78,7 +89,8 @@ class AuthenticationTest extends TestCase
 
                 $this->actingAs($user)
                     ->get($dashboard)
-                    ->assertForbidden();
+                    ->assertForbidden()
+                    ->assertSee('Access denied');
             }
         }
     }

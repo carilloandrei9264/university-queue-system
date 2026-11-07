@@ -28,11 +28,12 @@
         </nav>
 
         @if (session('status'))
-            <p class="status" role="status">{{ session('status') }}</p>
+            <p class="status success-state" data-state="success" role="status">{{ session('status') }}</p>
         @endif
 
         @if ($errors->any())
-            <section class="error" role="alert">
+            <section class="error validation-summary" role="alert" tabindex="-1" data-validation-summary>
+                <p>Please review the following and try again:</p>
                 <ul>
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -44,5 +45,6 @@
         <h1 class="admin-page-title">@yield('title')</h1>
         @yield('content')
     </main>
+    <script src="{{ asset('js/ui-states.js') }}" defer></script>
 </body>
 </html>

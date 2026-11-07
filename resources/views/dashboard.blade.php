@@ -34,5 +34,6 @@
             </nav>
         @endisset
     </main>
+    <script src="{{ asset('js/ui-states.js') }}" defer></script>
 </body>
 </html>

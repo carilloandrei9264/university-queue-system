@@ -42,7 +42,22 @@
                             <td>{{ $log->department?->name ?? '—' }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="5">No activity matches those filters.</td></tr>
+                        <tr>
+                            <td colspan="5">
+                                @if (request()->filled('search') || request()->filled('action'))
+                                    <div class="empty-state">
+                                        <h2>No matching activity</h2>
+                                        <p>Try a different search or action filter.</p>
+                                        <a href="{{ route('admin.activity.index') }}">Clear filters</a>
+                                    </div>
+                                @else
+                                    <div class="empty-state">
+                                        <h2>No activity recorded yet</h2>
+                                        <p>Successful account, office, service, and queue changes will appear here.</p>
+                                    </div>
+                                @endif
+                            </td>
+                        </tr>
                     @endforelse
                 </tbody>
             </table>

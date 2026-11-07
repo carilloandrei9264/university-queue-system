@@ -13,7 +13,7 @@
         <h1>Change your temporary password</h1>
         <p class="hint">For your account's security, set a new password before continuing. Use at least 12 characters.</p>
         @if ($errors->any())
-            <p class="error" role="alert">{{ $errors->first() }}</p>
+            <p class="error validation-summary" role="alert" tabindex="-1" data-validation-summary>{{ $errors->first() }}</p>
         @endif
         <form method="POST" action="{{ route('password.change.update') }}">
             @csrf
@@ -31,5 +31,6 @@
         </form>
       </section>
     </main>
+    <script src="{{ asset('js/ui-states.js') }}" defer></script>
 </body>
 </html>

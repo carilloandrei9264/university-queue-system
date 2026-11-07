@@ -17,13 +17,13 @@
         <form method="POST" action="{{ route('admin.students.store') }}">
             @csrf
             <label for="new-full-name">Full name</label>
-            <input id="new-full-name" name="full_name" type="text" maxlength="255" required>
+            <input id="new-full-name" name="full_name" type="text" maxlength="255" value="{{ old('full_name') }}" required>
             <label for="new-email">University email</label>
-            <input id="new-email" name="email" type="email" maxlength="255" required>
+            <input id="new-email" name="email" type="email" maxlength="255" value="{{ old('email') }}" required>
             <label for="new-student-id">Student ID</label>
-            <input id="new-student-id" name="student_id" type="text" maxlength="255" required>
+            <input id="new-student-id" name="student_id" type="text" maxlength="255" value="{{ old('student_id') }}" required>
             <label for="new-course">Course</label>
-            <input id="new-course" name="course" type="text" maxlength="255">
+            <input id="new-course" name="course" type="text" maxlength="255" value="{{ old('course') }}">
             <input name="is_active" type="hidden" value="1">
             <button type="submit">Create student account</button>
         </form>
@@ -35,6 +35,9 @@
             <label for="student-search">Search by name, email, or student ID</label>
             <input id="student-search" name="search" type="search" value="{{ request('search') }}" maxlength="255">
             <button type="submit">Search</button>
+            @if (request()->filled('search'))
+                <a href="{{ route('admin.students.index') }}">Clear search</a>
+            @endif
         </form>
         @forelse ($students as $student)
             <div class="record">
@@ -62,7 +65,18 @@
                 </form>
             </div>
         @empty
-            <p>No student records have been added.</p>
+            @if (request()->filled('search'))
+                <div class="empty-state" role="status">
+                    <h2>No matching students</h2>
+                    <p>Try a different name, email, or student ID.</p>
+                    <a href="{{ route('admin.students.index') }}">Clear search</a>
+                </div>
+            @else
+                <div class="empty-state">
+                    <h2>No student records yet</h2>
+                    <p>Create a student account using the form above to get started.</p>
+                </div>
+            @endif
         @endforelse
         {{ $students->links() }}
     </section>

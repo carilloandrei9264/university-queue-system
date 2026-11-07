@@ -36,5 +36,6 @@
         </section>
     </main>
     <footer class="display-footer">Updates automatically every 5 seconds · Please wait for your number to be called</footer>
+    <script src="{{ asset('js/ui-states.js') }}" defer></script>
 </body>
 </html>

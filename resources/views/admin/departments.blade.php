@@ -8,9 +8,9 @@
         <form method="POST" action="{{ route('admin.departments.store') }}">
             @csrf
             <label for="new-name">Name</label>
-            <input id="new-name" name="name" type="text" maxlength="255" required>
+            <input id="new-name" name="name" type="text" maxlength="255" value="{{ old('name') }}" required>
             <label for="new-prefix">Ticket prefix (2–4 uppercase letters)</label>
-            <input id="new-prefix" name="prefix" type="text" minlength="2" maxlength="4" pattern="[A-Z]{2,4}" required>
+            <input id="new-prefix" name="prefix" type="text" minlength="2" maxlength="4" pattern="[A-Z]{2,4}" value="{{ old('prefix') }}" required>
             <input name="is_active" type="hidden" value="1">
             <button type="submit">Add department</button>
         </form>
@@ -37,7 +37,10 @@
                 </form>
             </div>
         @empty
-            <p>No departments have been added.</p>
+            <div class="empty-state">
+                <h2>No departments yet</h2>
+                <p>Add a department using the form above to set up an office queue.</p>
+            </div>
         @endforelse
     </section>
 @endsection

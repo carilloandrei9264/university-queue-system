@@ -148,6 +148,80 @@ p { margin-top: 0.5rem; }
     padding: 0.8rem 1rem;
 }
 
+.success-state, .state-message[data-state="success"] {
+    border-color: #a9d8b7;
+    background: #ecf8ef;
+    color: #174f2a;
+}
+
+.state-message {
+    border: 1px solid var(--line);
+    border-radius: 0.65rem;
+    background: #fff;
+    padding: 0.7rem 0.9rem;
+}
+
+.state-message[data-state="loading"]::before,
+.form-progress[data-state="loading"]::before {
+    display: inline-block;
+    width: 0.9rem;
+    height: 0.9rem;
+    margin-right: 0.55rem;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    content: "";
+    vertical-align: -0.12em;
+    animation: state-spin 700ms linear infinite;
+}
+
+.state-message[data-state="slow"],
+.form-progress[data-state="slow"] {
+    border-color: #d5a12b;
+    background: #fff8e6;
+    color: #634000;
+}
+
+.state-message[data-state="offline"],
+.connection-banner {
+    border: 1px solid #d5a12b;
+    background: #fff8e6;
+    color: #634000;
+}
+
+.state-message[data-state="error"],
+.state-message[data-state="session"] {
+    border-color: #e7aaaa;
+    background: #fff0f0;
+    color: #7d1717;
+}
+
+.state-message[data-state="error"] a,
+.state-message[data-state="session"] a {
+    color: inherit;
+    font-weight: 750;
+}
+
+.connection-banner {
+    position: sticky;
+    z-index: 20;
+    top: 0;
+    padding: 0.7rem 1rem;
+    text-align: center;
+}
+
+.form-progress { margin: 0.75rem 0 0; }
+.form-progress[data-state="loading"] { color: var(--blue-900); }
+input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--danger-700); }
+.validation-summary { scroll-margin-top: 1rem; }
+.validation-summary p { margin: 0 0 0.5rem; }
+.validation-summary ul { margin-bottom: 0; }
+.empty-state a { display: inline-block; margin-top: 0.5rem; font-weight: 700; }
+
+@keyframes state-spin {
+    to { transform: rotate(360deg); }
+}
+
 .error {
     border: 1px solid #e7aaaa;
     border-radius: 0.65rem;

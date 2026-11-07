@@ -21,7 +21,7 @@
         </p>
 
         @if ($errors->any())
-            <p class="error" role="alert">{{ $errors->first() }}</p>
+            <p class="error validation-summary" role="alert" tabindex="-1" data-validation-summary>{{ $errors->first() }}</p>
         @endif
 
         <form method="POST" action="{{ route('login.store') }}">
@@ -36,5 +36,6 @@
         </form>
       </section>
     </main>
+    <script src="{{ asset('js/ui-states.js') }}" defer></script>
 </body>
 </html>

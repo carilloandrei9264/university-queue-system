@@ -29,14 +29,15 @@
             </form>
         </div>
         @if (session('status'))
-            <p class="status" role="status">{{ session('status') }}</p>
+            <p class="status success-state" data-state="success" role="status">{{ session('status') }}</p>
         @endif
 
-        <p class="refresh-note" data-refresh-state role="status">Queue refreshes automatically every 5 seconds.</p>
-        <div data-queue-refresh data-refresh-url="{{ route('staff.queue-status') }}">
+        <p class="refresh-note state-message" data-refresh-state data-state="ready" role="status" aria-live="polite">Queue refreshes automatically every 5 seconds.</p>
+        <div data-queue-refresh data-refresh-url="{{ route('staff.queue-status') }}" data-sign-in-url="{{ route('login') }}">
             @include('staff._queue')
         </div>
     </main>
     <script src="{{ asset('js/queue-refresh.js') }}" defer></script>
+    <script src="{{ asset('js/ui-states.js') }}" defer></script>
 </body>
 </html>

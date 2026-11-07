@@ -2,7 +2,7 @@
 
 | Version | Status | Last updated |
 |---------|--------|--------------|
-| 0.7 | In progress | 2026-11-08 |
+| 0.8 | In progress | 2026-11-08 |
 
 ## Design goals
 
@@ -15,7 +15,9 @@
 
 The shared responsive stylesheet is `public/css/app.css`. It now styles the landing, sign-in and password-change screens, student and staff queues, the admin area, and the public display chooser and board. The visual system uses NU blue and gold, responsive card layouts, labeled controls, visible keyboard focus, queue status badges, high-contrast large display codes, and reduced-motion handling.
 
-The existing five-second queue polling and its retry message are unchanged. Student and staff queue fragments use matching styles so updates retain the same presentation. This implementation provides visible empty and request-error states, but does not yet include loading skeletons, an offline cache, or stale-data presentation. Those states should not be considered implemented until they are added and tested.
+The interface includes empty states for queues and admin lists, focused validation summaries, success confirmations, permission-denied and expired-session pages, and no-result messages for student and activity-log searches. Queue polling announces loading, slow, offline, retryable error, successful update, and expired-session outcomes while keeping the last rendered queue visible. The shared `public/js/ui-states.js` helper adds offline banners and form-submission/slow-response feedback. It does not cache data offline; the displayed queue is only the last response already loaded in the page.
+
+Loading feedback is intentionally limited to in-progress form submissions and queue refreshes; server-rendered page navigation does not show a skeleton because page content arrives with the initial response.
 
 The admin overview now links directly to the existing office, service, staff, student, and activity-log pages. No unimplemented queue metrics or controls have been added.
 
@@ -38,7 +40,7 @@ The rebuild keeps the old visual identity and fixes how it works and how it is b
 | # | Finding in the old design | Improvement |
 |---|---------------------------|-------------|
 | U1 | **Not responsive.** There are 0 media queries. At 390px wide the student dashboard is 443px wide and the office dashboard is 414px, so both scroll sideways on a phone. Students are mainly phone users. | Mobile first layout, stacked cards on small screens (NFR-01). |
-| U2 | **Empty and error states are placeholders.** Screens show `N/A` and `YYYY-MM-DD` instead of a real empty state, and a failed load is one line of plain text. | The six states in this document (loading, empty, error, offline, slow, ready). |
+| U2 | **Empty and error states are placeholders.** Screens show `N/A` and `YYYY-MM-DD` instead of a real empty state, and a failed load is one line of plain text. | Explicit loading, empty, error, offline, slow, ready, no-result, permission, session, validation, and success states. |
 | U3 | **Colors have sprawled.** About 25 colors, with 5 blues (`#003594`, `#004aad`, `#003da5`, `#007bff`, `#bbdefb`), 3 golds (`#ffb81c`, `#f2c200`, `#d9a500`), and a cyan card (`#e0f7fa`) that is not part of the brand. No CSS variables. | One token file with a small scale built from NU blue and gold. |
 | U4 | **Some contrast fails.** White on the red Cancel button is 3.82:1 and the grey footnote text `#aaa` is 2.32:1 (4.5:1 needed). | Darker red and darker neutral text (see tokens). |
 | U5 | **Fixed pixel sizes.** All 11 font sizes are in `px` (14 to 75), with no scale, so text ignores the user's browser font setting. | `rem` units and a type scale. |
@@ -170,14 +172,19 @@ The wireframes show the full design. The MVP leaves out the Pause button, Skip, 
 
 | State | What the user sees |
 |-------|-------------------|
-| Loading | Skeleton shimmer in the shape of the content |
+| Loading | An announced progress message for form submissions and queue refreshes |
 | Empty | Short message and the next action ("No tickets waiting") |
-| Error | What failed, plain words, a **Try again** button |
-| Offline | Banner "You're offline. Showing the last known queue." Data marked stale |
-| Slow | After 4 seconds, "Still loading. Your connection looks slow." |
-| Ready | The content |
+| Error | Plain-language validation, access, or refresh error with a useful next step |
+| Offline | Connection banner; the currently rendered queue stays visible and polling resumes after reconnect |
+| Slow | After 4 seconds, a slow-network message while preserving the current page data |
+| No search result | Explanation and a clear-filter/search action |
+| Permission denied | Dedicated 403 page explaining the account lacks access |
+| Session expired | Dedicated 419 page asks the user to sign in again |
+| Form validation | Error summary is announced and focused; entered values are retained on account-creation forms |
+| Success | Confirmation uses a status announcement after a completed action or successful refresh |
+| Ready | The current content and next action |
 
-Queue polling currently reports refresh failures and retries on its existing interval. Add skeletons, a manual retry action, and offline/stale-data handling only when those behaviors can be supported by the real queue endpoints.
+Queue polling retries on its existing five-second interval. Offline behavior preserves the current rendered response rather than offering an offline cache or marking cached records as fresh.
 
 ## Design system
 

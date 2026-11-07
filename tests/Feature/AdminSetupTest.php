@@ -131,12 +131,16 @@ class AdminSetupTest extends TestCase
     public function test_catalog_and_staff_forms_reject_invalid_values(): void
     {
         $this->from(route('admin.departments.index'))
+            ->followingRedirects()
             ->post(route('admin.departments.store'), [
                 'name' => 'Invalid prefix office',
                 'prefix' => 'bad',
                 'is_active' => 1,
             ])
-            ->assertSessionHasErrors('prefix');
+            ->assertOk()
+            ->assertSee('Please review the following and try again')
+            ->assertSee('The prefix field format is invalid.')
+            ->assertSee('value="bad"', false);
 
         $this->from(route('admin.departments.index'))
             ->post(route('admin.departments.store'), [
@@ -332,6 +336,19 @@ class AdminSetupTest extends TestCase
         }
 
         $this->assertDatabaseMissing('users', ['email' => 'unauthorized.student@example.com']);
+    }
+
+    public function test_search_pages_explain_when_filters_have_no_results(): void
+    {
+        $this->get(route('admin.students.index', ['search' => 'no-such-student']))
+            ->assertOk()
+            ->assertSee('No matching students')
+            ->assertSee('Clear search');
+
+        $this->get(route('admin.activity.index', ['search' => 'no-such-actor']))
+            ->assertOk()
+            ->assertSee('No matching activity')
+            ->assertSee('Clear filters');
     }
 
     public function test_admin_can_reset_an_account_password_and_logs_no_secret(): void

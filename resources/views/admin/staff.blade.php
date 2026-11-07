@@ -17,14 +17,14 @@
         <form method="POST" action="{{ route('admin.staff.store') }}">
             @csrf
             <label for="new-full-name">Full name</label>
-            <input id="new-full-name" name="full_name" type="text" maxlength="255" required>
+            <input id="new-full-name" name="full_name" type="text" maxlength="255" value="{{ old('full_name') }}" required>
             <label for="new-email">Email</label>
-            <input id="new-email" name="email" type="email" maxlength="255" required>
+            <input id="new-email" name="email" type="email" maxlength="255" value="{{ old('email') }}" required>
             <label for="new-staff-department">Assigned department</label>
             <select id="new-staff-department" name="department_id" required>
                 <option value="">Choose a department</option>
                 @foreach ($departments as $department)
-                    <option value="{{ $department->id }}">{{ $department->name }}</option>
+                    <option value="{{ $department->id }}" @selected(old('department_id') == $department->id)>{{ $department->name }}</option>
                 @endforeach
             </select>
             <input name="is_active" type="hidden" value="1">
@@ -64,7 +64,10 @@
                 </form>
             </div>
         @empty
-            <p>No staff accounts have been added.</p>
+            <div class="empty-state">
+                <h2>No staff accounts yet</h2>
+                <p>Create an account above and assign it to an office.</p>
+            </div>
         @endforelse
     </section>
 @endsection
