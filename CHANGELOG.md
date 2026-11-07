@@ -13,7 +13,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - Student ticket creation and cancellation, plus staff call-next, complete, skip, and recall actions with transaction-locked daily numbering.
 - Public office queue displays with automatic refresh, showing the serving and next waiting ticket codes without student details.
 - Student ticket status and staff queue lists refresh automatically without reloading the page.
-- Admin-provisioned student accounts and an auditable activity log are now part of the planned pilot scope; university identity integration remains provider-specific.
+- Admins can create, edit, and deactivate passwordless student profile records; sign-in for these accounts awaits a secure credential flow or university identity adapter. The activity log remains planned.
 - Recorded the decision to keep polling for now and evaluate Laravel Reverb only when pilot needs and hosting support justify WebSockets.
 
 ## [0.0.0] - 2026-11-06

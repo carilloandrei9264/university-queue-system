@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\StaffController;
+use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Display\QueueDisplayController;
@@ -57,5 +58,8 @@ Route::middleware('auth')->group(function (): void {
         Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
         Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
         Route::patch('/staff/{staff}', [StaffController::class, 'update'])->name('staff.update');
+        Route::get('/students', [StudentController::class, 'index'])->name('students.index');
+        Route::post('/students', [StudentController::class, 'store'])->name('students.store');
+        Route::patch('/students/{student}', [StudentController::class, 'update'])->name('students.update');
     });
 });

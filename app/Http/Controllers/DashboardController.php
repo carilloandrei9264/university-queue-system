@@ -41,6 +41,7 @@ class DashboardController extends Controller
                 'Departments' => route('admin.departments.index'),
                 'Services' => route('admin.services.index'),
                 'Office staff' => route('admin.staff.index'),
+                'Students' => route('admin.students.index'),
             ],
         ]);
     }

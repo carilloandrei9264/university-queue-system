@@ -43,6 +43,7 @@
             <a href="{{ route('admin.departments.index') }}">Departments</a>
             <a href="{{ route('admin.services.index') }}">Services</a>
             <a href="{{ route('admin.staff.index') }}">Office staff</a>
+            <a href="{{ route('admin.students.index') }}">Students</a>
         </nav>
 
         @if (session('status'))

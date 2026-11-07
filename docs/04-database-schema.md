@@ -8,7 +8,7 @@ This is the relational data model for a SQL database: MySQL by default, or Maria
 
 Field names are written in camelCase here. In the migrations, use Laravel's snake_case (`department_id`, `created_at`) and the standard `id`, `created_at` and `updated_at` columns.
 
-**MVP schema.** The target pilot schema includes `departments`, `services`, `users`, `tickets`, `dailyCounters` and `audit_logs`. The existing first migrations do not yet include the proposed external-identity fields or audit table; add them only through a reviewed follow-up migration. Items for deferred features are marked below and are added by later migrations when the feature is built.
+**MVP schema.** The target pilot schema includes `departments`, `services`, `users`, `tickets`, `dailyCounters` and `audit_logs`. Admin-managed student profiles now use the existing `users` table. The existing first migrations do not yet include the proposed external-identity fields or audit table; add them only through a reviewed follow-up migration. Items for deferred features are marked below and are added by later migrations when the feature is built.
 
 ## Entity relationship diagram
 

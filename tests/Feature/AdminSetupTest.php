@@ -8,6 +8,7 @@ use App\Models\Ticket;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -209,6 +210,119 @@ class AdminSetupTest extends TestCase
             'department_id' => Department::firstOrFail()->id,
             'password' => '',
             'password_confirmation' => '',
+            'is_active' => 1,
+        ])->assertNotFound();
+
+        $this->assertSame(1, User::where('role', 'admin')->count());
+    }
+
+    public function test_admin_can_create_update_and_deactivate_passwordless_student_records(): void
+    {
+        $this->get(route('admin.students.index'))
+            ->assertOk()
+            ->assertSee('Add student record')
+            ->assertSee('No password is set')
+            ->assertSee('Search by name, email, or student ID');
+
+        $this->post(route('admin.students.store'), [
+            'full_name' => 'New Student',
+            'email' => ' NEW.STUDENT@example.com ',
+            'student_id' => '  DEMO-2026-004 ',
+            'course' => 'BS Information Technology',
+            'is_active' => 1,
+            'role' => 'admin',
+            'password' => 'should-not-be-saved',
+        ])->assertRedirect(route('admin.students.index'));
+
+        $student = User::where('email', 'new.student@example.com')->firstOrFail();
+        $this->assertSame('student', $student->role);
+        $this->assertSame('DEMO-2026-004', $student->student_id);
+        $this->assertNull($student->password);
+        $this->assertNull($student->email_verified_at);
+        $this->assertFalse(Auth::attempt([
+            'email' => $student->email,
+            'password' => 'should-not-be-saved',
+        ]));
+
+        $this->patch(route('admin.students.update', $student), [
+            'full_name' => 'Updated Student',
+            'email' => 'new.student@example.com',
+            'student_id' => 'DEMO-2026-004',
+            'course' => 'BS Computer Science',
+            'is_active' => 0,
+            'role' => 'admin',
+            'password' => 'also-ignored',
+        ])->assertRedirect(route('admin.students.index'));
+
+        $student->refresh();
+        $this->assertSame('student', $student->role);
+        $this->assertSame('Updated Student', $student->full_name);
+        $this->assertSame('BS Computer Science', $student->course);
+        $this->assertFalse($student->is_active);
+        $this->assertNull($student->password);
+    }
+
+    public function test_student_administration_rejects_duplicate_identity_and_non_admin_access(): void
+    {
+        $student = User::where('role', 'student')->firstOrFail();
+
+        $this->from(route('admin.students.index'))
+            ->post(route('admin.students.store'), [
+                'full_name' => 'Duplicate Student',
+                'email' => 'other@example.com',
+                'student_id' => $student->student_id,
+                'course' => 'BS Information Technology',
+                'is_active' => 1,
+            ])
+            ->assertSessionHasErrors('student_id');
+
+        $this->from(route('admin.students.index'))
+            ->post(route('admin.students.store'), [
+                'full_name' => 'Duplicate Student',
+                'email' => $student->email,
+                'student_id' => 'DEMO-DUPLICATE',
+                'course' => 'BS Information Technology',
+                'is_active' => 1,
+            ])
+            ->assertSessionHasErrors('email');
+
+        foreach (['student', 'staff'] as $role) {
+            $user = User::where('role', $role)->firstOrFail();
+
+            $this->actingAs($user)
+                ->get(route('admin.students.index'))
+                ->assertForbidden();
+
+            $this->actingAs($user)
+                ->post(route('admin.students.store'), [
+                    'full_name' => 'Unauthorized Student',
+                    'email' => 'unauthorized.student@example.com',
+                    'student_id' => 'UNAUTHORIZED-001',
+                    'is_active' => 1,
+                ])
+                ->assertForbidden();
+        }
+
+        $this->assertDatabaseMissing('users', ['email' => 'unauthorized.student@example.com']);
+    }
+
+    public function test_admin_can_search_student_records_without_exposing_other_roles(): void
+    {
+        $this->get(route('admin.students.index', ['search' => 'student001']))
+            ->assertOk()
+            ->assertSee('student001@example.com')
+            ->assertDontSee('student002@example.com')
+            ->assertDontSee('admission.staff@example.com');
+    }
+
+    public function test_student_management_cannot_change_a_non_student_role(): void
+    {
+        $admin = User::where('role', 'admin')->firstOrFail();
+
+        $this->patch(route('admin.students.update', $admin), [
+            'full_name' => $admin->full_name,
+            'email' => $admin->email,
+            'student_id' => 'NOT-A-STUDENT',
             'is_active' => 1,
         ])->assertNotFound();
 
