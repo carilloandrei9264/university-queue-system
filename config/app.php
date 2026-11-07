@@ -68,6 +68,7 @@ return [
     'timezone' => 'Asia/Manila',
 
     'demo_seed_password' => env('DEMO_SEED_PASSWORD'),
+    'demo_login_enabled' => env('DEMO_LOGIN_ENABLED', false),
 
     /*
     |--------------------------------------------------------------------------

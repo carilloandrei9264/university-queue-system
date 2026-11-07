@@ -7,6 +7,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ### Added
 - Laravel 13 application foundation, MVP database migrations, and fake demo accounts for students, admin, and office staff.
+- Local-only demo login/logout, role-specific dashboards, and server-side role guards.
 
 ## [0.0.0] - 2026-11-06
 

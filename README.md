@@ -30,6 +30,8 @@ Read [`docs/README.md`](docs/README.md). It lists every document, what it is for
 
 The demo seeder creates one admin, one staff account per office, and three students. Their emails and fake records are listed in [`database/seeders/DemoSeeder.php`](database/seeders/DemoSeeder.php); all demo accounts use the password set in `.env`. Never use the demo seeder or its accounts in production. The seed data covers Admission, Registrar and Accounting; the pilot still starts with one office.
 
+Local demo sign-in is enabled by `DEMO_LOGIN_ENABLED=true` in `.env.example`. The login is intentionally unavailable in production until the university identity provider is implemented.
+
 ## Project layout
 
 Standard Laravel structure with the project-specific code and documentation alongside it.
