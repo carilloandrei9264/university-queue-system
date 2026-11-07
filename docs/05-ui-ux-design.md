@@ -2,7 +2,7 @@
 
 | Version | Status | Last updated |
 |---------|--------|--------------|
-| 0.6 | Draft | 2026-11-08 |
+| 0.7 | In progress | 2026-11-08 |
 
 ## Design goals
 
@@ -10,6 +10,14 @@
 2. **Phone first.** Students use phones in a hallway, often on weak Wi-Fi.
 3. **Calm under pressure.** Clear states, plain words, no `alert()` pop-ups.
 4. **Readable from far away** on the public display.
+
+## Current implementation
+
+The shared responsive stylesheet is `public/css/app.css`. It now styles the landing, sign-in and password-change screens, student and staff queues, the admin area, and the public display chooser and board. The visual system uses NU blue and gold, responsive card layouts, labeled controls, visible keyboard focus, queue status badges, high-contrast large display codes, and reduced-motion handling.
+
+The existing five-second queue polling and its retry message are unchanged. Student and staff queue fragments use matching styles so updates retain the same presentation. This implementation provides visible empty and request-error states, but does not yet include loading skeletons, an offline cache, or stale-data presentation. Those states should not be considered implemented until they are added and tested.
+
+The admin overview now links directly to the existing office, service, staff, student, and activity-log pages. No unimplemented queue metrics or controls have been added.
 
 ## Current design review (old NU Queue-It)
 
@@ -169,11 +177,11 @@ The wireframes show the full design. The MVP leaves out the Pause button, Skip, 
 | Slow | After 4 seconds, "Still loading. Your connection looks slow." |
 | Ready | The content |
 
-The portfolio project already has working versions of these (shimmer, retry button, connection banner). Reuse the same approach in the shared CSS components and a small JavaScript helper (see [03](03-architecture.md)).
+Queue polling currently reports refresh failures and retries on its existing interval. Add skeletons, a manual retry action, and offline/stale-data handling only when those behaviors can be supported by the real queue endpoints.
 
 ## Design system
 
-Define everything in one tokens stylesheet (`tokens.css`). Do not hard-code colors anywhere else. Values are proposals built from the old palette. TODO(you): replace with official brand values if the university has them.
+Keep design tokens and shared component rules together in `public/css/app.css` for this no-build-step MVP. Avoid hard-coded colors in page templates. Values are proposals built from the old palette; replace them with official brand values if the university has them.
 
 ### Color tokens
 
@@ -184,14 +192,14 @@ Define everything in one tokens stylesheet (`tokens.css`). Do not hard-code colo
 | `--blue-500` | `#2f6bd6` | Links on white, focus ring | on white: 5.0:1 |
 | `--blue-100` | `#e6edfa` | Tinted surfaces, replaces the cyan cards | |
 | `--gold-500` | `#ffb81c` | **NU gold**, accents, highlights, active tab line | on NU blue: 6.3:1 |
-| `--gold-700` | `#8a5a00` | Gold used as text on light backgrounds | on white: 5.9:1 |
+| `--gold-700` | `#805400` | Gold used as text on light backgrounds | on white: 6.59:1 |
 | `--ink-900` | `#14202e` | Body text | on white: 16.5:1 |
 | `--ink-600` | `#4b5a6b` | Secondary text (replaces `#aaa` and `#888`) | on white: 7.1:1 |
 | `--surface` | `#ffffff` | Cards | |
 | `--bg` | `#f4f6fa` | Page background | |
 | `--line` | `#d8dfea` | Borders and dividers | |
-| `--danger-600` | `#c62828` | Cancel, errors (replaces `#e74c3c`) | white on it: 5.6:1 |
-| `--success-600` | `#1b7f3b` | Serving, success | white on it: 5.1:1 |
+| `--danger-700` | `#a61b1b` | Cancel, errors (replaces `#e74c3c`) | white on it: 7.52:1 |
+| `--success-700` | `#176b36` | Serving, success | white on it: 6.58:1 |
 
 Dark mode swaps surfaces and text (for example `--bg` to `#0c1424`, `--surface` to `#14213a`) and keeps blue and gold as accents. Verify every pair with a contrast checker before locking the tokens.
 

@@ -1,11 +1,17 @@
-<section aria-labelledby="queue-heading">
-    <h2 id="queue-heading">Today's queue</h2>
+<section class="panel" aria-labelledby="queue-heading">
+    <div class="panel-heading">
+        <h2 id="queue-heading">Today’s queue</h2>
+        <span class="status-badge">{{ $tickets->where('status', 'waiting')->count() }} waiting</span>
+    </div>
     @forelse ($tickets as $ticket)
-        <article class="ticket">
-            <p class="ticket-code">{{ $ticket->code }}</p>
-            <p>{{ $ticket->service->name }} · {{ ucfirst($ticket->status) }}</p>
+        <article class="queue-item {{ $ticket->status === 'serving' ? 'is-serving' : '' }}">
+            <div class="queue-item-main">
+                <p class="ticket-code">{{ $ticket->code }}</p>
+                <span class="queue-service">{{ $ticket->service->name }}</span>
+                <span class="status-badge {{ $ticket->status }}">{{ $ticket->status === 'serving' ? 'Now serving' : ucfirst($ticket->status) }}</span>
+            </div>
             @if (in_array($ticket->status, ['serving', 'skipped'], true))
-                <div class="actions">
+                <div class="queue-actions">
                     @if ($ticket->status === 'serving')
                         <form method="POST" action="{{ route('staff.tickets.complete', $ticket) }}">
                             @csrf
@@ -25,6 +31,9 @@
             @endif
         </article>
     @empty
-        <p>No tickets in today's queue yet.</p>
+        <div class="empty-state">
+            <h2>Queue is clear</h2>
+            <p>There are no tickets in today’s queue yet.</p>
+        </div>
     @endforelse
 </section>

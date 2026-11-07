@@ -38,10 +38,26 @@ class DashboardController extends Controller
         return view('dashboard', [
             'title' => 'Admin dashboard',
             'adminLinks' => [
-                'Departments' => route('admin.departments.index'),
-                'Services' => route('admin.services.index'),
-                'Office staff' => route('admin.staff.index'),
-                'Students' => route('admin.students.index'),
+                'Departments' => [
+                    'url' => route('admin.departments.index'),
+                    'description' => 'Set up offices and control queue availability.',
+                ],
+                'Services' => [
+                    'url' => route('admin.services.index'),
+                    'description' => 'Manage the services students can queue for.',
+                ],
+                'Office staff' => [
+                    'url' => route('admin.staff.index'),
+                    'description' => 'Create accounts and assign staff to an office.',
+                ],
+                'Students' => [
+                    'url' => route('admin.students.index'),
+                    'description' => 'Create and manage student accounts.',
+                ],
+                'Activity log' => [
+                    'url' => route('admin.activity.index'),
+                    'description' => 'Review recent account, office, and queue changes.',
+                ],
             ],
         ]);
     }

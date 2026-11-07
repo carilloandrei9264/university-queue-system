@@ -21,7 +21,7 @@
     </section>
 
     <section>
-        <div style="overflow-x: auto">
+        <div class="table-wrap">
             <table>
                 <thead>
                     <tr>

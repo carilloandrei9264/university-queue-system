@@ -44,14 +44,15 @@ class QueueRefreshTest extends TestCase
             ->assertOk()
             ->assertSee($ticket->code)
             ->assertDontSee($otherTicket->code)
-            ->assertSee('People ahead: 0');
+            ->assertSee('People ahead')
+            ->assertSee('<strong>0</strong>', false);
 
         $queue->callNext(User::where('email', 'admission.staff@example.com')->firstOrFail());
 
         $this->actingAs($student)
             ->get(route('student.queue-status'))
             ->assertOk()
-            ->assertSee('Status: Serving')
+            ->assertSee('Now serving')
             ->assertDontSee('Cancel ticket');
     }
 

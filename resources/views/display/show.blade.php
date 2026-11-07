@@ -6,47 +6,35 @@
     <meta name="robots" content="noindex, nofollow">
     <meta http-equiv="refresh" content="5">
     <title>{{ $department->name }} queue | {{ config('app.name') }}</title>
-    <style>
-        :root { color-scheme: light; font-family: system-ui, sans-serif; color: #172033; background: #f4f7fb; }
-        body { margin: 0; min-height: 100vh; }
-        header { background: #003594; border-bottom: 0.5rem solid #ffb81c; color: white; padding: 1.25rem 3vw; }
-        header a { color: white; }
-        main { display: grid; gap: 2rem; grid-template-columns: minmax(0, 1.6fr) minmax(16rem, 1fr); margin: clamp(2rem, 8vh, 5rem) auto; max-width: 90rem; padding: 0 3vw; }
-        section { background: white; border-radius: 1rem; box-shadow: 0 1rem 3rem rgb(0 53 148 / 9%); min-height: 18rem; padding: clamp(1.5rem, 4vw, 3rem); }
-        h1 { font-size: clamp(1.75rem, 4vw, 3rem); margin: 0; }
-        h2 { color: #475467; font-size: clamp(1rem, 2vw, 1.5rem); margin: 0 0 2rem; text-transform: uppercase; }
-        .ticket { color: #003594; font-size: clamp(4rem, 14vw, 10rem); font-weight: 800; letter-spacing: 0.04em; line-height: 1; margin: 0; overflow-wrap: anywhere; }
-        .next-ticket { font-size: clamp(2.5rem, 8vw, 5rem); }
-        .empty { color: #667085; font-size: clamp(1.5rem, 4vw, 2.5rem); margin: 0; }
-        .refresh { color: #667085; font-size: 0.9rem; grid-column: 1 / -1; text-align: right; }
-        :focus-visible { outline: 3px solid #ffb81c; outline-offset: 3px; }
-        @media (max-width: 48rem) { main { grid-template-columns: 1fr; } }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
-<body>
-    <header>
-        <a href="{{ route('display.index') }}">All offices</a>
-        <h1>{{ $department->name }} queue</h1>
+<body class="display-page">
+    <header class="app-header">
+        <div class="header-inner display-header-inner">
+            <a class="brand" href="{{ route('display.index') }}">NU QUEUE-IT</a>
+            <h1 class="display-title">{{ $department->name }} queue</h1>
+            <a class="header-meta" href="{{ route('display.index') }}">All offices</a>
+        </div>
     </header>
-    <main>
-        <section aria-labelledby="serving-heading" aria-live="polite">
+    <main class="display-shell">
+        <section class="display-tile" aria-labelledby="serving-heading" aria-live="polite">
             <h2 id="serving-heading">Now serving</h2>
             @if ($servingTicket)
-                <p class="ticket">{{ $servingTicket->code }}</p>
-                <p>Please proceed to the service counter.</p>
+                <p class="display-ticket">{{ $servingTicket->code }}</p>
+                <p class="display-help">Please proceed to the service counter.</p>
             @else
-                <p class="empty">No ticket is being served.</p>
+                <div class="empty-state"><p>No ticket is being served.</p></div>
             @endif
         </section>
-        <section aria-labelledby="next-heading">
+        <section class="display-tile display-tile-next" aria-labelledby="next-heading">
             <h2 id="next-heading">Up next</h2>
             @if ($nextTicket)
-                <p class="ticket next-ticket">{{ $nextTicket->code }}</p>
+                <p class="display-ticket">{{ $nextTicket->code }}</p>
             @else
-                <p class="empty">No tickets waiting.</p>
+                <div class="empty-state"><p>No tickets waiting.</p></div>
             @endif
         </section>
-        <p class="refresh">This display refreshes automatically every 5 seconds.</p>
     </main>
+    <footer class="display-footer">Updates automatically every 5 seconds · Please wait for your number to be called</footer>
 </body>
 </html>

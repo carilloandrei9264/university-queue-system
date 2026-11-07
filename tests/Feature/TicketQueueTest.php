@@ -277,7 +277,8 @@ class TicketQueueTest extends TestCase
             ->get(route('student.dashboard'))
             ->assertOk()
             ->assertSee($ticket->code)
-            ->assertSee('People ahead: 0');
+            ->assertSee('People ahead')
+            ->assertSee('<strong>0</strong>', false);
     }
 
     public function test_staff_queue_routes_run_call_and_completion_actions(): void
