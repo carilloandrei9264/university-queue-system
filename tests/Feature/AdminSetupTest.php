@@ -26,7 +26,12 @@ class AdminSetupTest extends TestCase
 
     public function test_admin_can_create_department_service_and_staff(): void
     {
-        $this->get(route('admin.dashboard'))->assertOk()->assertSee('Departments');
+        $this->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee('Departments')
+            ->assertSee('profile-menu', false)
+            ->assertSee('Administration')
+            ->assertSee('data-logout-form', false);
         $this->get(route('admin.departments.index'))->assertOk()->assertSee('Add department');
         $this->get(route('admin.services.index'))->assertOk()->assertSee('Add service');
         $this->get(route('admin.staff.index'))->assertOk()->assertSee('Add staff account');
@@ -417,7 +422,10 @@ class AdminSetupTest extends TestCase
         $this->get(route('admin.activity.index'))
             ->assertOk()
             ->assertSee('Activity log')
-            ->assertSee('Successful account, office, service, and queue changes');
+            ->assertSee('Successful account, office, service, and queue changes')
+            ->assertSee('activity-search-controls', false)
+            ->assertSee('Filter')
+            ->assertSee('Clear');
 
         foreach (['student', 'staff'] as $role) {
             $user = User::where('role', $role)->firstOrFail();

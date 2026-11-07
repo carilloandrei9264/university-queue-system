@@ -26,6 +26,7 @@ class AuthenticationTest extends TestCase
         $this->get(route('login'))
             ->assertOk()
             ->assertSee('Demo accounts are enabled for this local environment')
+            ->assertSee('A clearer way to move through campus services.')
             ->assertSee('name="email"', false);
     }
 

@@ -10,11 +10,7 @@
     <header class="app-header">
         <div class="header-inner">
             <a class="brand" href="{{ route('admin.dashboard') }}">NU QUEUE-IT</a>
-            <span class="header-meta">Administration</span>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button class="header-signout" type="submit">Sign out</button>
-            </form>
+            @include('admin._profile-menu')
         </div>
     </header>
     <main class="page-shell">

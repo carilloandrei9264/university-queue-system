@@ -13,7 +13,7 @@
             <span class="header-meta">Student portal</span>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button class="secondary" type="submit">Sign out</button>
+                <button class="secondary" type="submit" data-loading-text="Signing out…">Sign out</button>
             </form>
         </div>
     </header>
