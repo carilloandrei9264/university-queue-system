@@ -5,6 +5,8 @@ use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Staff\QueueController;
+use App\Http\Controllers\Student\TicketController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -23,11 +25,18 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
     Route::prefix('student')->name('student.')->middleware('role:student')->group(function (): void {
-        Route::get('/dashboard', [DashboardController::class, 'student'])->name('dashboard');
+        Route::get('/dashboard', [TicketController::class, 'index'])->name('dashboard');
+        Route::post('/tickets', [TicketController::class, 'store'])->name('tickets.store');
+        Route::delete('/tickets/{ticket}', [TicketController::class, 'destroy'])->name('tickets.destroy');
     });
 
     Route::prefix('staff')->name('staff.')->middleware('role:staff')->group(function (): void {
-        Route::get('/dashboard', [DashboardController::class, 'staff'])->name('dashboard');
+        Route::get('/dashboard', [QueueController::class, 'index'])->name('dashboard');
+        Route::post('/call-next', [QueueController::class, 'callNext'])->name('call-next');
+        Route::post('/tickets/{ticket}/complete', [QueueController::class, 'complete'])
+            ->name('tickets.complete');
+        Route::post('/tickets/{ticket}/skip', [QueueController::class, 'skip'])->name('tickets.skip');
+        Route::post('/tickets/{ticket}/recall', [QueueController::class, 'recall'])->name('tickets.recall');
     });
 
     Route::prefix('admin')->name('admin.')->middleware('role:admin')->group(function (): void {

@@ -4,7 +4,7 @@ A queue management system for university offices (starting with the enrollment o
 
 This is a rebuild of the original NU Queue-It (group project, 2025). The old system is audited in [`docs/01-old-system-audit.md`](docs/01-old-system-audit.md).
 
-**Status:** Laravel foundation in progress (v0.1.0).
+**Status:** Laravel MVP backend and demo queue in progress (v0.1.0).
 **Stack:** Laravel 13, PHP 8.3+, and MySQL/MariaDB. Local development uses the MariaDB bundled with XAMPP; the production engine must match the university host. See [ADR-0001](docs/decisions/ADR-0001-backend-approach.md).
 **MVP:** a pilot for one department. See [`docs/02-requirements.md`](docs/02-requirements.md).
 
@@ -33,6 +33,8 @@ The demo seeder creates one admin, one staff account per office, and three stude
 Local demo sign-in is enabled by `DEMO_LOGIN_ENABLED=true` in `.env.example`. The login is intentionally unavailable in production until the university identity provider is implemented.
 
 On a new production database, run `php artisan queue-it:create-admin` from the server terminal to interactively create the first administrator. The command accepts no credentials as command-line arguments, prompts for a confirmed password, and refuses to create another admin once one exists. After signing in locally as an admin, use the Departments, Services, and Office staff links to manage the catalog. Staff passwords are local demo credentials only; production sign-in will use the university identity provider.
+
+The demo queue workflow is available after signing in: students can take a daily numbered ticket for an active service and cancel a waiting ticket; staff can call the next ticket, complete or skip it, and recall a skipped ticket. The public display and university identity-provider integration are not implemented yet.
 
 ## Project layout
 

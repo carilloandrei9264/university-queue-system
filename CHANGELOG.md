@@ -10,6 +10,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - Local-only demo login/logout, role-specific dashboards, and server-side role guards.
 - Terminal-only first administrator command and admin pages for departments, services, and staff.
 - Validation and feature tests for admin authorization, record management, and first-admin provisioning.
+- Student ticket creation and cancellation, plus staff call-next, complete, skip, and recall actions with transaction-locked daily numbering.
 
 ## [0.0.0] - 2026-11-06
 
