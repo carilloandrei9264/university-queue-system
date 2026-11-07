@@ -8,7 +8,7 @@ Priority uses MoSCoW: **M**ust, **S**hould, **C**ould. "Must" items define v1.0.
 
 ## MVP scope (pilot)
 
-The first release for real users is a pilot that starts with **one department**. The departments in scope for now are the Admission, Registrar and Accounting offices (the enrollment process). TODO(you): which one starts? Only what is listed under "Included" is needed for it.
+The first release for real users is a pilot that starts with **Admission (AMS)**. Registrar and Accounting remain later expansion candidates. Only what is listed under "Included" is needed for the pilot.
 
 **Included**
 
@@ -23,7 +23,7 @@ The first release for real users is a pilot that starts with **one department**.
 
 Also in the MVP: NFR-01 to NFR-09, NFR-11 to NFR-14.
 
-**Deferred past the MVP:** guest tickets (AUTH-06), priority tickets (STF-07), feedback (FBK-01, ADM-04), statistics (ADM-05), multi-campus support, complex opening-hours rules (TKT-07), and WebSocket delivery using Reverb. Until then, screens use simple periodic refresh. University SSO integration depends on the identity protocol the institution provides; it is not assumed to be available for the first pilot.
+**Deferred past the MVP:** guest tickets (AUTH-06), priority tickets (STF-07), feedback (FBK-01, ADM-04), statistics (ADM-05), multi-campus support, complex opening-hours rules (TKT-07), and WebSocket delivery using Reverb. Until then, screens use simple periodic refresh. University SSO integration depends on the identity protocol the institution provides; it is not assumed to be available for the first pilot. The pilot uses admin-provisioned local accounts with generated temporary passwords; local password sign-in must be explicitly enabled in the deployment environment, while seeded demo accounts remain blocked in production.
 
 **Not listed either way** (treated as after the MVP unless you decide otherwise): ticket history (TKT-08), the estimated wait part of TKT-05, counter label (STF-05), pause queue (STF-06), next tickets on the display (DSP-03) and sound (DSP-04).
 

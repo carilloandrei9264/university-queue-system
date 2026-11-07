@@ -36,7 +36,7 @@ The original NU Queue-It had working screens but broke down in the details: staf
 
 ### MVP (one-department pilot)
 
-The first release for real users is a pilot that starts with **one department**, before expanding to others. The departments in scope for now are the Admission, Registrar and Accounting offices, which together cover the enrollment process. It includes:
+The first release for real users is a pilot that starts with **Admission (AMS)**, before expanding to Registrar and Accounting. It includes:
 
 1. Admin setup for one department, its services, and student and staff accounts.
 2. Student sign-in through the configured authentication method, ticket creation, cancelling a waiting ticket, and ticket status viewing.
@@ -59,14 +59,14 @@ Deferred past the MVP: guest tickets, priority tickets, feedback, statistics, mu
 
 ## Open questions
 
-- Departments in scope for now: Admission, Registrar and Accounting (the enrollment process). Their services come from the old data and are listed in [04](04-database-schema.md). Library and NU Exchange from the old data are not in scope for now. TODO(you): which of the three starts the pilot, and are the services right? If you want all three in the pilot from the start, say so and the MVP wording and roadmap change.
+- Pilot office: Admission (AMS). Registrar and Accounting (the enrollment process) are later expansion candidates. Their initial services come from the old data and are listed in [04](04-database-schema.md); confirm the final service list with Admission before a real pilot. Library and NU Exchange from the old data are not in scope.
 - TODO(you): Is this graded, and are there required deliverables or technologies from your instructor?
 - Deferred past the MVP, decide after the pilot: do guests (people without an account) get tickets? See `AUTH-06`.
 - Deferred past the MVP, decide after the pilot: do you want a priority lane (seniors, PWD, pregnant)? See `STF-07`.
 - Decided in [ADR-0001](decisions/ADR-0001-backend-approach.md): Laravel with MySQL (MariaDB if the host provides it), hosted by the university.
 - University hosting: nothing beyond Laravel's own requirements is assumed (confirmed, and Laravel already runs locally with XAMPP). TODO(you): details only the university can give: server access, PHP and database versions (MySQL or MariaDB), HTTPS, how releases are deployed, backups, and who maintains the server. The checklist is in [07](07-deployment.md).
 - Decided in [ADR-0003](decisions/ADR-0003-account-provisioning-and-identity.md): admins provision student and staff accounts; an identity adapter keeps the app ready for an institution's supported sign-in method. TODO(you): confirm whether "EDI" meant a student-information data exchange; EDI itself is not a standard authentication protocol. Confirm which identity and student-data interfaces are available before selecting an integration.
-- TODO(you): if the pilot has no university identity provider, choose how local account credentials are securely issued and reset. Admins must not set or view users' passwords.
+- Decided for the pilot: use admin-provisioned local accounts and generated one-time temporary passwords until a university identity provider is confirmed. Admins cannot choose or retrieve passwords; local sign-in can be explicitly disabled by deployment configuration.
 - Decided in [ADR-0004](decisions/ADR-0004-live-updates.md): keep the current five-second refresh for now and assess Reverb only after the university host's WebSocket, TLS, firewall, and process-supervision support is known.
 - Decided in [ADR-0005](decisions/ADR-0005-activity-log.md): retain an admin-visible, append-only record of successful business transactions, with sensitive data excluded. Confirm the retention period with the university.
 - Decided: cancel (`TKT-06`) and skip with recall (`STF-04`) are in the MVP, because enrollment sends a student through several offices and a student may hold only one active ticket at a time.

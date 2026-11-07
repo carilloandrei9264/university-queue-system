@@ -2,7 +2,7 @@
 
 | Version | Schema version | Status | Last updated |
 |---------|----------------|--------|--------------|
-| 0.4 | 2 (proposed) | Draft | 2026-11-08 |
+| 0.4 | 3 | Draft | 2026-11-08 |
 
 This is the relational data model for a SQL database: MySQL by default, or MariaDB if that is what the university's hosting provides ([ADR-0001](decisions/ADR-0001-backend-approach.md)). One engine is chosen per deployment, and the schema is not designed to switch engines later. Every change is a Laravel migration, a controlled way to apply schema changes in order.
 
@@ -65,6 +65,7 @@ The `password` column holds a hash only when the configured authentication mode 
 | identityProvider | text | nullable provider key for an external identity |
 | externalSubject | text | nullable stable subject from that provider; unique with identityProvider |
 | isActive | boolean | default true |
+| isDemo | boolean | default false; seeded demo accounts are blocked from production sign-in |
 | mustChangePassword | boolean | default false; temporary local credentials require a change before other authenticated routes |
 | password | text | nullable hash; never store the temporary password as plaintext |
 | createdAt | timestamp | |
@@ -180,7 +181,7 @@ Enforce this on the server with Laravel policies and department-scoped queries. 
 
 ## Seed data (fake only)
 
-- Departments in scope for now (the enrollment process): Admission (AMS), Registrar (RGS), Accounting (ACC). The pilot starts with one of them (TODO(you): which). Library (LIB) and NU Exchange (EXC) from the old data are not in scope for now.
+- Departments in scope for now (the enrollment process): Admission (AMS), Registrar (RGS), Accounting (ACC). Admission (AMS) is the first pilot office; Registrar and Accounting may follow. Library (LIB) and NU Exchange (EXC) from the old data are not in scope for now.
 - Services, taken from the old data: Admission: Application Processing, Entrance Exam Scheduling. Registrar: Enrollment, Transcript Request. Accounting: Scholarship Processing, Tuition Payment. TODO(you): confirm with each office, and add or rename services to match the enrollment process.
 - 1 demo admin, 1 demo staff per department, and a few demo students, each with a fake name, student ID, university-style email (`example.com` only) and course. Never import data from the old dump. Real student records, if the pilot uses them, are loaded onto the server by the university and never committed to the repository.
 
@@ -191,4 +192,5 @@ Increase the schema version in this file's header whenever the model changes. Re
 | Schema | App version | Change | Migration |
 |--------|-------------|--------|-----------|
 | 1 | 0.1.0 | Initial model | initial migrations, no existing data |
-| 2 (proposed) | planned | Add external identity mapping and append-only `audit_logs`; admin-provisioned student accounts | New Laravel migration; retain existing local users and leave external identity fields null. Implement only after reviewing the data-migration plan. |
+| 2 | 0.4.0 | Add temporary password state and append-only `audit_logs` | `2026_11_08_000005_add_temporary_passwords_and_audit_logs.php`; existing users retain password state default values. |
+| 3 | 0.4.0 | Mark seeded demo accounts to prevent production sign-in | `2026_11_08_000006_add_demo_account_marker.php`; known demo accounts are marked, all other existing accounts default to non-demo. |

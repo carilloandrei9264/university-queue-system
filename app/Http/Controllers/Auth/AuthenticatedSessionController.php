@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,14 +13,16 @@ class AuthenticatedSessionController extends Controller
 {
     public function create(): View
     {
-        $this->ensureDemoLoginIsAvailable();
+        $this->ensureLocalPasswordLoginIsAvailable();
 
-        return view('auth.login');
+        return view('auth.login', [
+            'demoLogin' => config('app.demo_login_enabled') && ! app()->environment('production'),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $this->ensureDemoLoginIsAvailable();
+        $this->ensureLocalPasswordLoginIsAvailable();
 
         $email = $request->input('email');
 
@@ -33,7 +36,11 @@ class AuthenticatedSessionController extends Controller
         ]);
         $credentials['is_active'] = true;
 
-        if (! Auth::attempt($credentials)) {
+        $user = User::query()->where('email', $credentials['email'])->first();
+        $demoAccountUnavailable = $user?->is_demo
+            && (app()->environment('production') || ! config('app.demo_login_enabled'));
+
+        if ($demoAccountUnavailable || ! Auth::attempt($credentials)) {
             return back()
                 ->withErrors(['email' => 'The provided credentials are invalid or inactive.'])
                 ->onlyInput('email');
@@ -65,12 +72,12 @@ class AuthenticatedSessionController extends Controller
         return redirect()->route('login');
     }
 
-    private function ensureDemoLoginIsAvailable(): void
+    private function ensureLocalPasswordLoginIsAvailable(): void
     {
         abort_unless(
-            config('app.demo_login_enabled') && ! app()->environment('production'),
+            config('app.local_password_login_enabled'),
             503,
-            'Demo password sign-in is only available in local and testing environments.',
+            'Local password sign-in is currently unavailable.',
         );
     }
 }

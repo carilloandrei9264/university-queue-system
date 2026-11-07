@@ -64,6 +64,7 @@ class DemoSeeder extends Seeder
                     'role' => 'staff',
                     'department_id' => $department->id,
                     'is_active' => true,
+                    'is_demo' => true,
                     'email_verified_at' => now(),
                 ],
             );
@@ -76,6 +77,7 @@ class DemoSeeder extends Seeder
                 'password' => $password,
                 'role' => 'admin',
                 'is_active' => true,
+                'is_demo' => true,
                 'email_verified_at' => now(),
             ],
         );
@@ -96,6 +98,7 @@ class DemoSeeder extends Seeder
                     'student_id' => $studentId,
                     'course' => $course,
                     'is_active' => true,
+                    'is_demo' => true,
                     'email_verified_at' => now(),
                 ],
             );

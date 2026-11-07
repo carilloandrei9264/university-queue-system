@@ -21,7 +21,14 @@
     <main>
         <p>NU Queue-It</p>
         <h1>Sign in</h1>
-        <p class="hint">Local demo accounts only. University sign-in will be connected separately.</p>
+        <p class="hint">
+            @if ($demoLogin)
+                Demo accounts are enabled for this local environment. Accounts created by an administrator can also sign in.
+            @else
+                Sign in with the temporary password provided by your administrator. Change it after your first sign-in.
+            @endif
+            University sign-in can be connected separately when the institution's identity provider is confirmed.
+        </p>
 
         @if ($errors->any())
             <p class="error" role="alert">{{ $errors->first() }}</p>

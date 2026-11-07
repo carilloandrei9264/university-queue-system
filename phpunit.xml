@@ -28,6 +28,7 @@
         <env name="DB_URL" value=""/>
         <env name="DEMO_SEED_PASSWORD" value="testing-only-password"/>
         <env name="DEMO_LOGIN_ENABLED" value="true"/>
+        <env name="LOCAL_PASSWORD_LOGIN_ENABLED" value="true"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>

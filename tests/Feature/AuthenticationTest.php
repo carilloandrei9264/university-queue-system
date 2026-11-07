@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -23,7 +24,7 @@ class AuthenticationTest extends TestCase
     {
         $this->get(route('login'))
             ->assertOk()
-            ->assertSee('Local demo accounts only')
+            ->assertSee('Demo accounts are enabled for this local environment')
             ->assertSee('name="email"', false);
     }
 
@@ -187,10 +188,48 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_demo_password_login_is_unavailable_in_production(): void
+    public function test_provisioned_local_accounts_can_sign_in_in_production_but_demo_accounts_cannot(): void
     {
         $this->app->detectEnvironment(fn () => 'production');
+        $this->withoutMiddleware(PreventRequestForgery::class);
+        $demoAdmin = User::where('email', 'admin@example.com')->firstOrFail();
+        $this->assertTrue($demoAdmin->is_demo);
+        $this->assertTrue(app()->environment('production'));
+
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertSee('temporary password provided by your administrator');
+
+        $this->from(route('login'))
+            ->post('/login', [
+                'email' => 'admin@example.com',
+                'password' => 'testing-only-password',
+            ])->assertRedirect(route('login'));
+        $this->assertGuest();
+
+        $student = User::create([
+            'full_name' => 'Pilot Student',
+            'email' => 'pilot.student@example.com',
+            'student_id' => 'PILOT-001',
+            'password' => 'pilot-temporary-password',
+            'role' => 'student',
+            'is_active' => true,
+        ]);
+
+        $this->post('/login', [
+            'email' => $student->email,
+            'password' => 'pilot-temporary-password',
+        ])->assertRedirect(route('student.dashboard'));
+    }
+
+    public function test_local_password_sign_in_can_be_disabled(): void
+    {
+        config(['app.local_password_login_enabled' => false]);
 
         $this->get(route('login'))->assertServiceUnavailable();
+        $this->post('/login', [
+            'email' => 'admin@example.com',
+            'password' => 'testing-only-password',
+        ])->assertServiceUnavailable();
     }
 }

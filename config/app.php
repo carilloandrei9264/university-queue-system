@@ -69,6 +69,10 @@ return [
 
     'demo_seed_password' => env('DEMO_SEED_PASSWORD'),
     'demo_login_enabled' => env('DEMO_LOGIN_ENABLED', false),
+    'local_password_login_enabled' => env(
+        'LOCAL_PASSWORD_LOGIN_ENABLED',
+        env('APP_ENV', 'production') !== 'production',
+    ),
 
     /*
     |--------------------------------------------------------------------------

@@ -27,7 +27,7 @@ Write each case before building the feature. IDs link back to [requirements](02-
 | T-AUTH-05b | AUTH-05 | As student, send the "call next" request directly | Refused (403) |
 | T-AUTH-05c | AUTH-05 | As staff of department A, try to call next in department B | Refused (`forbidden`) |
 | T-AUTH-04 | AUTH-04 | Search the app for any admin-creation path | None exists |
-| T-AUTH-07 | AUTH-07 | Create/reset a local account, sign in with its one-time password, change it, then inspect forms, logs, and responses | Generated credential is shown once, cached responses are disabled, password is hashed and forced to change, and no secret is logged or retrievable; external passwords are never collected |
+| T-AUTH-07 | AUTH-07 | Create/reset a local account, sign in with its one-time password, change it, then inspect behavior in production and non-production configurations | Generated credential is shown once, cached responses are disabled, password is hashed and forced to change, no secret is logged or retrievable, demo accounts cannot sign in in production, and provisioned local accounts can sign in only when enabled |
 | T-AUTH-08 | AUTH-08 | Sign in through a configured test identity adapter using a stable external subject | Existing local role is preserved; unknown or inactive users are refused |
 | T-ADM-07 | ADM-07 | Admin creates and edits student accounts with unique identity data; try duplicates and role escalation | Valid student account is managed; duplicates and privilege escalation are rejected |
 | T-TKT-02 | TKT-02 | Take tickets on two different days (change the test clock) | Number restarts at 001, per department |

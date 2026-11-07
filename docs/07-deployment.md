@@ -16,7 +16,9 @@ Use the same database engine, with a similar version, in every environment, beca
 
 ## Configuration
 
-Settings live in `.env` on each machine (never committed) and in Laravel's `config/` files: application URL, database connection, `APP_ENV`, `APP_DEBUG` (off in production), the Asia/Manila timezone (NFR-09), and the app version shown in the footer (NFR-10). Commit a `.env.example` with no real values. Never commit credentials.
+Settings live in `.env` on each machine (never committed) and in Laravel's `config/` files: application URL, database connection, `APP_ENV`, `APP_DEBUG` (off in production), local password sign-in, the Asia/Manila timezone (NFR-09), and the app version shown in the footer (NFR-10). Commit a `.env.example` with no real values. Never commit credentials.
+
+`LOCAL_PASSWORD_LOGIN_ENABLED` explicitly enables or disables sign-in with locally stored passwords. It defaults to enabled in non-production and disabled in production; set it to `true` for the pilot only after HTTPS and secure temporary-password delivery are ready. `DEMO_LOGIN_ENABLED` is separate and controls only seeded demo accounts in non-production environments. Demo accounts are marked in the database, refused in production even if demo login is accidentally enabled, and the demo seeder refuses to run in production.
 
 ## Server setup (to be confirmed with the university)
 
@@ -50,8 +52,8 @@ The university hosts the application on its own server. GitHub is used for sourc
 1. Create the database and a dedicated database user that has only the privileges the application needs. Never use `root`.
 2. Put the connection settings in the server's `.env`.
 3. Run the migrations (`php artisan migrate`).
-4. On local or staging only, run `php artisan db:seed` to create the fake demo admin and other demo accounts. The demo seeder refuses to run in production. On a new production database, the server owner runs `php artisan queue-it:create-admin` interactively from the server terminal. It refuses to create another admin; never create an admin from a public page.
-5. Create the pilot department, its services, student accounts and staff accounts through the admin screens. Use fake demo data on staging.
+4. On local or staging only, run `php artisan db:seed` to create the fake demo admin and other demo accounts. The demo seeder refuses to run in production. On a new production database, set `LOCAL_PASSWORD_LOGIN_ENABLED=true` only when local-password sign-in is approved, then the server owner runs `php artisan queue-it:create-admin` interactively from the server terminal. It refuses to create another admin; never create an admin from a public page.
+5. Create the Admission (AMS) pilot department, its approved services, student accounts and staff accounts through the admin screens. Use fake demo data on staging.
 6. On production, provision student records from an approved university source, or have an admin create them through the app. Real records are loaded on the server and never committed to git. Configure external identity only after IT confirms the protocol and ownership mapping ([ADR-0003](decisions/ADR-0003-account-provisioning-and-identity.md)).
 7. Confirm each row of the [access matrix](04-database-schema.md) with a feature test before go-live.
 8. Set up backups before real data arrives, including an agreed retention policy for the activity log.

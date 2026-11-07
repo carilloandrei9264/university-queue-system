@@ -21,6 +21,7 @@ use Illuminate\Notifications\Notifiable;
     'course',
     'department_id',
     'is_active',
+    'is_demo',
     'email_verified_at',
     'must_change_password',
 ])]
@@ -41,6 +42,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'is_demo' => 'boolean',
             'must_change_password' => 'boolean',
         ];
     }
