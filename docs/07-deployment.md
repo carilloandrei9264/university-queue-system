@@ -70,7 +70,7 @@ Redeploy the previous tag. If the release ran migrations, either roll them back 
 
 ## Display board (kiosk) setup
 
-1. Open the display page (for example `/display`) on the TV's browser and press F11 for full screen.
+1. Open `/display` in the TV's browser, choose the office (or go directly to `/display/AMS` with its prefix), and press F11 for full screen. The board refreshes every five seconds and displays ticket codes, not student identities.
 2. Disable sleep on the device.
 3. When sound exists (DSP-04, after the MVP), enable it once with the on-screen button, because browsers block autoplay.
 4. The page keeps refreshing and recovers by itself after a network drop.

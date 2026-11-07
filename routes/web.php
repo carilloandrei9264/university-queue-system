@@ -5,9 +5,13 @@ use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Display\QueueDisplayController;
 use App\Http\Controllers\Staff\QueueController;
 use App\Http\Controllers\Student\TicketController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/display', [QueueDisplayController::class, 'index'])->name('display.index');
+Route::get('/display/{department:prefix}', [QueueDisplayController::class, 'show'])->name('display.show');
 
 Route::get('/', function () {
     return redirect()->route(auth()->check() ? 'dashboard' : 'login');
