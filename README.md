@@ -32,6 +32,8 @@ The demo seeder creates one admin, one staff account per office, and three stude
 
 Local demo sign-in is enabled by `DEMO_LOGIN_ENABLED=true` in `.env.example`. The login is intentionally unavailable in production until the university identity provider is implemented.
 
+On a new production database, run `php artisan queue-it:create-admin` from the server terminal to interactively create the first administrator. The command accepts no credentials as command-line arguments, prompts for a confirmed password, and refuses to create another admin once one exists. After signing in locally as an admin, use the Departments, Services, and Office staff links to manage the catalog. Staff passwords are local demo credentials only; production sign-in will use the university identity provider.
+
 ## Project layout
 
 Standard Laravel structure with the project-specific code and documentation alongside it.

@@ -47,7 +47,7 @@ The university hosts the application on its own server. GitHub is used for sourc
 1. Create the database and a dedicated database user that has only the privileges the application needs. Never use `root`.
 2. Put the connection settings in the server's `.env`.
 3. Run the migrations (`php artisan migrate`).
-4. On local or staging only, run `php artisan db:seed` to create the fake demo admin and other demo accounts. The demo seeder refuses to run in production. A secure, owner-only production admin bootstrap command still needs to be implemented before deployment; never create an admin from a public page.
+4. On local or staging only, run `php artisan db:seed` to create the fake demo admin and other demo accounts. The demo seeder refuses to run in production. On a new production database, the server owner runs `php artisan queue-it:create-admin` interactively from the server terminal. It refuses to create another admin; never create an admin from a public page.
 5. Create the pilot department, its services and its staff through the admin screens. Use fake demo data on staging.
 6. Load student records: fake seeded records on local and staging. On production, records supplied by the university are loaded onto the server and never committed to git ([ADR-0002](decisions/ADR-0002-university-sign-in.md)).
 7. Confirm each row of the [access matrix](04-database-schema.md) with a feature test before go-live.

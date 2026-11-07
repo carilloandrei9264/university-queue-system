@@ -27,6 +27,13 @@
         @isset($department)
             <p>Your assigned office: {{ $department->name }}</p>
         @endisset
+        @isset($adminLinks)
+            <nav aria-label="Administration">
+                @foreach ($adminLinks as $label => $url)
+                    <p><a href="{{ $url }}">{{ $label }}</a></p>
+                @endforeach
+            </nav>
+        @endisset
         <p>The role-based sign-in foundation is ready. Queue features will appear here as they are built.</p>
     </main>
 </body>

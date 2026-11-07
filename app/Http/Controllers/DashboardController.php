@@ -35,6 +35,13 @@ class DashboardController extends Controller
 
     public function admin(): View
     {
-        return view('dashboard', ['title' => 'Admin dashboard']);
+        return view('dashboard', [
+            'title' => 'Admin dashboard',
+            'adminLinks' => [
+                'Departments' => route('admin.departments.index'),
+                'Services' => route('admin.services.index'),
+                'Office staff' => route('admin.staff.index'),
+            ],
+        ]);
     }
 }
