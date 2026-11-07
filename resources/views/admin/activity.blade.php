@@ -5,7 +5,7 @@
 @section('content')
     <section>
         <p class="muted">Successful account, office, service, and queue changes. Passwords and other secrets are never included.</p>
-        <form method="GET" action="{{ route('admin.activity.index') }}">
+        <form class="activity-filter-form" method="GET" action="{{ route('admin.activity.index') }}">
             <label for="activity-action">Action</label>
             <select id="activity-action" name="action">
                 <option value="">All actions</option>
@@ -15,8 +15,10 @@
             </select>
             <label for="activity-search">Search actor or target</label>
             <input id="activity-search" name="search" type="search" maxlength="255" value="{{ request('search') }}">
-            <button type="submit">Filter</button>
-            <a href="{{ route('admin.activity.index') }}">Clear</a>
+            <div class="activity-filter-actions">
+                <button type="submit">Filter</button>
+                <a href="{{ route('admin.activity.index') }}">Clear</a>
+            </div>
         </form>
     </section>
 

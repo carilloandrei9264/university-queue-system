@@ -1,65 +1,87 @@
-# NU Queue-It v2
+# NU Queue-It
 
-A queue management system for university offices (starting with the enrollment offices: Admission, Registrar and Accounting). Students take a ticket from their phone, office staff call the next person, and a public screen shows who is being served.
+NU Queue-It is a Laravel-based queue management system for university offices. Students can take a service ticket, staff can manage the waiting queue, and a public display shows the ticket being served. The first intended pilot is the Admission office (AMS).
 
-This is a rebuild of the original NU Queue-It (group project, 2025). The old system is audited in [`docs/01-old-system-audit.md`](docs/01-old-system-audit.md).
+**Project status:** Functional local MVP; not yet ready for a production or university pilot. See [the next steps](docs/10-next-steps.md) for the remaining validation and deployment work.
 
-**Status:** Laravel MVP backend and demo queue in progress (v0.1.0).
-**Stack:** Laravel 13, PHP 8.3+, and MySQL/MariaDB. Local development uses the MariaDB bundled with XAMPP; the production engine must match the university host. See [ADR-0001](docs/decisions/ADR-0001-backend-approach.md).
-**MVP:** a pilot for one department. See [`docs/02-requirements.md`](docs/02-requirements.md).
+## Features
 
-## Where to start
+- Role-based student, office staff, and administrator accounts
+- Admin-managed departments, services, and accounts
+- Generated temporary passwords for provisioned accounts, with a forced change at first sign-in
+- Student ticket creation and cancellation; staff call, complete, skip, and recall actions
+- Public queue display
+- Automatic queue refresh every five seconds
+- Read-only administrator activity log
+- Responsive interface with loading, empty, offline, error, and validation feedback
 
-Read [`docs/README.md`](docs/README.md). It lists every document, what it is for, and the order to fill them in.
+The current MVP uses local password accounts. University sign-in adapters and Reverb-based real-time updates are deferred until the pilot institution and hosting requirements are known.
 
-## Local setup
+## Technology
 
-1. Install PHP 8.3 or later, Composer, and MySQL or MariaDB.
-2. Create a local database and a dedicated app user (do not use `root` for the application):
+- PHP 8.3+
+- Laravel 13
+- MySQL or MariaDB (the default local configuration uses MariaDB)
+- Blade templates, plain CSS, and lightweight JavaScript; no frontend build step
+
+## Requirements
+
+- PHP 8.3+ with the extensions required by Laravel and the selected database driver
+- Composer
+- MySQL or MariaDB
+
+For running the automated test suite, enable PHP's `pdo_sqlite` extension; the PHPUnit configuration uses SQLite.
+
+## Local development
+
+1. Install dependencies and create the environment file:
+
+   ```powershell
+   composer install
+   Copy-Item .env.example .env
+   ```
+
+2. Create a local database and a dedicated application user. For MariaDB/MySQL, for example:
 
    ```sql
    CREATE DATABASE university_queue_system CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   CREATE USER 'queue_it_app'@'127.0.0.1' IDENTIFIED BY 'replace-with-a-long-local-password';
+   CREATE USER 'queue_it_app'@'127.0.0.1' IDENTIFIED BY 'use-a-unique-local-password';
    GRANT ALL PRIVILEGES ON university_queue_system.* TO 'queue_it_app'@'127.0.0.1';
    ```
 
-3. Run `composer install`, then copy `.env.example` to `.env`.
-4. Set `DB_PASSWORD` and a private, local-only `DEMO_SEED_PASSWORD` in `.env`, then run `php artisan key:generate`.
-5. Run `php artisan migrate --seed` to create the MVP tables and fake demo records.
-6. Start the local server with `php artisan serve`.
+3. Set `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD` in `.env` to match that database. Set `DEMO_SEED_PASSWORD` to a private password for local demo accounts, then initialize the application:
 
-The demo seeder creates one admin, one staff account per office, and three students. Their emails and fake records are listed in [`database/seeders/DemoSeeder.php`](database/seeders/DemoSeeder.php); all demo accounts use the password set in `.env`. Never use the demo seeder or its accounts in production. The seed data covers Admission, Registrar and Accounting; the pilot still starts with one office.
+   ```powershell
+   php artisan key:generate
+   php artisan migrate --seed
+   php artisan serve
+   ```
 
-Local password sign-in is controlled by `LOCAL_PASSWORD_LOGIN_ENABLED` (enabled by default outside production; disabled by default in production). In production, enable it only for the approved local-account pilot. Seeded demo accounts have a separate marker and cannot sign in in production. `DEMO_LOGIN_ENABLED` controls seeded demo accounts only in non-production environments. Admins can create student and staff accounts with generated temporary passwords; the password is shown once after creation or reset, and must be changed at first sign-in. Admins cannot retrieve the password later. Treat it as sensitive and share it with the account holder through a secure channel.
+   Open `http://127.0.0.1:8000`.
 
-On a new production database, run `php artisan queue-it:create-admin` from the server terminal to interactively create the first administrator. The command accepts no credentials as command-line arguments, prompts for a confirmed password, and refuses to create another admin once one exists. After signing in locally as an admin, use the Departments, Services, Office staff, and Students links to manage the catalog and accounts. Successful account, catalog, and queue changes appear in the read-only Activity log. Demo passwords are local credentials only; a production credential method and secure account issuance must be agreed before real users are onboarded.
+The demo seeder creates an administrator, office staff, and student accounts. Their email addresses are listed in [DemoSeeder.php](database/seeders/DemoSeeder.php); the seeded accounts use the local `DEMO_SEED_PASSWORD` value. Demo accounts and seeding are for development only; never use them in production.
 
-The demo queue workflow is available after signing in: students can take a daily numbered ticket for an active service and cancel a waiting ticket; staff can call the next ticket, complete or skip it, and recall a skipped ticket. Student ticket status and the staff queue update automatically every five seconds without reloading the page. The first pilot office is Admission (AMS); Registrar and Accounting remain future expansion candidates. A public display is available at `/display`; choose an office to open its board, or go directly to `/display/AMS`. The display refreshes every five seconds and shows ticket codes only. University identity adapters remain future work; Reverb is deferred pending pilot and hosting needs.
+For a new production database, create the first administrator interactively on the server with `php artisan queue-it:create-admin`. Do not pass passwords as command-line arguments. Account credentials are sensitive: share generated temporary passwords with users through an approved secure channel.
 
-## Project layout
+## Tests and code style
 
-Standard Laravel structure with the project-specific code and documentation alongside it.
-
-```
-queue-it-v2/
-  app/
-    Domain/             ticket rules (code format, status transitions)
-    Http/               controllers, form requests (validation), middleware
-    Models/
-    Policies/           who may do what
-    Services/           actions that use one transaction (create ticket, call next, complete)
-  config/
-  database/
-    migrations/         schema changes, applied in order
-    seeders/            fake demo data only
-  public/               web root, with css/ and js/ as plain files (no build step)
-  resources/
-    views/              Blade templates
-  routes/
-  tests/                unit and feature tests, manual checklist
-  docs/                 SDLC documents (versioned together with the code)
+```powershell
+php artisan test
+vendor/bin/pint --test
 ```
 
-## Versioning
+The test suite uses SQLite, while deployment uses the institution's selected MySQL/MariaDB version. Passing SQLite tests is not a substitute for validating migrations, behavior, and concurrent ticket operations against the actual deployment database. See the [test plan](docs/06-test-plan.md) and [manual checklist](tests/manual-checklist.md).
 
-Semantic Versioning, Conventional Commits, GitHub Flow. Details: [`docs/08-versioning-and-workflow.md`](docs/08-versioning-and-workflow.md). Release history: [`CHANGELOG.md`](CHANGELOG.md).
+## Documentation
+
+- [Documentation index](docs/README.md)
+- [Requirements and MVP scope](docs/02-requirements.md)
+- [Architecture](docs/03-architecture.md)
+- [Database schema](docs/04-database-schema.md)
+- [Deployment guidance](docs/07-deployment.md)
+- [Roadmap](docs/09-roadmap.md)
+- [Next steps for the Admission pilot](docs/10-next-steps.md)
+
+## Contributing and versioning
+
+See [versioning and workflow](docs/08-versioning-and-workflow.md). Keep implementation and documentation in sync, and run the relevant automated and manual checks before proposing a change.

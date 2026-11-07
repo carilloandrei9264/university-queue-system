@@ -428,6 +428,10 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
 .admin-content .empty-state h2 { margin-bottom: 0.3rem; }
 .admin-content .empty-state p { margin-bottom: 0.25rem; }
 .admin-content nav[role="navigation"] { margin-top: 0.85rem; }
+.activity-filter-form { display: grid; gap: 0.3rem; }
+.activity-filter-form label { margin-top: 0.45rem; }
+.activity-filter-actions { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.4rem; }
+.activity-filter-actions button { min-width: 5.5rem; }
 .visually-hidden {
     position: absolute;
     width: 1px;

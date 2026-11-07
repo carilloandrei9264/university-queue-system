@@ -13,7 +13,7 @@
             <span class="header-meta">Administration</span>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button class="secondary" type="submit">Sign out</button>
+                <button class="header-signout" type="submit">Sign out</button>
             </form>
         </div>
     </header>

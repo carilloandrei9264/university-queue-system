@@ -14,6 +14,7 @@ These documents follow the SDLC phases. They live in the repo and change togethe
 | 07 | [Deployment](07-deployment.md) | Deployment | How does it get online? | Before the first release |
 | 08 | [Versioning and workflow](08-versioning-and-workflow.md) | All | How do we name versions, branches and commits? | Read once, then follow |
 | 09 | [Roadmap](09-roadmap.md) | Planning | What ships in which version? | Update after every release |
+| 10 | [Admission pilot next steps](10-next-steps.md) | Deployment | What remains before a limited Admission pilot? | Before preparing a pilot |
 | - | [Decisions (ADRs)](decisions/) | Design | Why did we choose X over Y? | Whenever a big choice is made |
 
 Current decisions: [backend](decisions/ADR-0001-backend-approach.md), [university sign-in direction](decisions/ADR-0002-university-sign-in.md), [accounts and identity adapters](decisions/ADR-0003-account-provisioning-and-identity.md), [polling versus Reverb](decisions/ADR-0004-live-updates.md), and [activity log](decisions/ADR-0005-activity-log.md).
