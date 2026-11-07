@@ -8,8 +8,8 @@ use App\Models\Ticket;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class AdminSetupTest extends TestCase
@@ -49,15 +49,37 @@ class AdminSetupTest extends TestCase
             'full_name' => 'Library Staff',
             'email' => 'LIBRARY.STAFF@example.com',
             'department_id' => $department->id,
-            'password' => 'temporary-demo-password',
-            'password_confirmation' => 'temporary-demo-password',
             'is_active' => 1,
-        ])->assertRedirect(route('admin.staff.index'));
+        ])->assertRedirect(route('admin.staff.index'))
+            ->assertSessionHas('temporary_password', fn (mixed $password): bool => is_string($password) && strlen($password) === 24);
 
         $staff = User::where('email', 'library.staff@example.com')->firstOrFail();
         $this->assertSame('staff', $staff->role);
         $this->assertSame($department->id, $staff->department_id);
-        $this->assertTrue(Hash::check('temporary-demo-password', $staff->password));
+        $this->assertTrue($staff->must_change_password);
+        $temporaryPassword = session('temporary_password');
+        $this->get(route('admin.staff.index'))
+            ->assertOk()
+            ->assertSee($temporaryPassword)
+            ->assertHeader('Cache-Control', 'no-store, private');
+        $this->get(route('admin.staff.index'))->assertDontSee($temporaryPassword);
+        $this->assertTrue(Hash::check($temporaryPassword, $staff->password));
+        $this->assertDatabaseHas('audit_logs', [
+            'actor_id' => User::where('role', 'admin')->value('id'),
+            'action' => 'staff.created',
+            'target_id' => $staff->id,
+            'department_id' => $department->id,
+            'metadata' => null,
+        ]);
+
+        $resetResponse = $this->post(route('admin.staff.password.reset', $staff))
+            ->assertRedirect(route('admin.staff.index'))
+            ->assertSessionHas('temporary_password', fn (mixed $password): bool => is_string($password) && strlen($password) === 24);
+        $resetPassword = $resetResponse->getSession()->get('temporary_password');
+        $staff->refresh();
+        $this->assertTrue($staff->must_change_password);
+        $this->assertTrue(Hash::check($resetPassword, $staff->password));
+
         $this->assertDatabaseHas('services', [
             'department_id' => $department->id,
             'name' => 'Book Loan',
@@ -86,14 +108,24 @@ class AdminSetupTest extends TestCase
             'full_name' => 'Updated Staff',
             'email' => $staff->email,
             'department_id' => $department->id,
-            'password' => '',
-            'password_confirmation' => '',
             'is_active' => 0,
         ])->assertRedirect(route('admin.staff.index'));
 
         $this->assertDatabaseHas('departments', ['id' => $department->id, 'name' => 'Admissions', 'is_active' => 0]);
         $this->assertDatabaseHas('services', ['id' => $service->id, 'name' => 'Updated service', 'is_active' => 0]);
         $this->assertDatabaseHas('users', ['id' => $staff->id, 'full_name' => 'Updated Staff', 'is_active' => 0]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'department.updated',
+            'target_id' => $department->id,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'service.updated',
+            'target_id' => $service->id,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'staff.updated',
+            'target_id' => $staff->id,
+        ]);
     }
 
     public function test_catalog_and_staff_forms_reject_invalid_values(): void
@@ -125,8 +157,6 @@ class AdminSetupTest extends TestCase
                 'full_name' => 'Unassigned Staff',
                 'email' => 'unassigned@example.com',
                 'department_id' => $inactiveDepartment->id,
-                'password' => 'temporary-demo-password',
-                'password_confirmation' => 'temporary-demo-password',
                 'is_active' => 1,
             ])
             ->assertSessionHasErrors('department_id');
@@ -196,8 +226,6 @@ class AdminSetupTest extends TestCase
             'full_name' => 'Attempted Admin',
             'email' => 'attempted.admin@example.com',
             'department_id' => Department::firstOrFail()->id,
-            'password' => 'temporary-demo-password',
-            'password_confirmation' => 'temporary-demo-password',
             'is_active' => 1,
             'role' => 'admin',
         ])->assertRedirect(route('admin.staff.index'));
@@ -208,20 +236,18 @@ class AdminSetupTest extends TestCase
             'full_name' => $admin->full_name,
             'email' => $admin->email,
             'department_id' => Department::firstOrFail()->id,
-            'password' => '',
-            'password_confirmation' => '',
             'is_active' => 1,
         ])->assertNotFound();
 
         $this->assertSame(1, User::where('role', 'admin')->count());
     }
 
-    public function test_admin_can_create_update_and_deactivate_passwordless_student_records(): void
+    public function test_admin_can_create_update_and_deactivate_student_accounts_with_one_time_passwords(): void
     {
         $this->get(route('admin.students.index'))
             ->assertOk()
-            ->assertSee('Add student record')
-            ->assertSee('No password is set')
+            ->assertSee('Add student account')
+            ->assertSee('generated automatically')
             ->assertSee('Search by name, email, or student ID');
 
         $this->post(route('admin.students.store'), [
@@ -231,18 +257,21 @@ class AdminSetupTest extends TestCase
             'course' => 'BS Information Technology',
             'is_active' => 1,
             'role' => 'admin',
-            'password' => 'should-not-be-saved',
-        ])->assertRedirect(route('admin.students.index'));
+        ])->assertRedirect(route('admin.students.index'))
+            ->assertSessionHas('temporary_password', fn (mixed $password): bool => is_string($password) && strlen($password) === 24);
 
         $student = User::where('email', 'new.student@example.com')->firstOrFail();
         $this->assertSame('student', $student->role);
         $this->assertSame('DEMO-2026-004', $student->student_id);
-        $this->assertNull($student->password);
+        $this->assertTrue($student->must_change_password);
         $this->assertNull($student->email_verified_at);
-        $this->assertFalse(Auth::attempt([
-            'email' => $student->email,
-            'password' => 'should-not-be-saved',
-        ]));
+        $temporaryPassword = session('temporary_password');
+        $this->get(route('admin.students.index'))
+            ->assertOk()
+            ->assertSee($temporaryPassword)
+            ->assertHeader('Cache-Control', 'no-store, private');
+        $this->get(route('admin.students.index'))->assertDontSee($temporaryPassword);
+        $this->assertTrue(Hash::check($temporaryPassword, $student->password));
 
         $this->patch(route('admin.students.update', $student), [
             'full_name' => 'Updated Student',
@@ -251,7 +280,6 @@ class AdminSetupTest extends TestCase
             'course' => 'BS Computer Science',
             'is_active' => 0,
             'role' => 'admin',
-            'password' => 'also-ignored',
         ])->assertRedirect(route('admin.students.index'));
 
         $student->refresh();
@@ -259,7 +287,7 @@ class AdminSetupTest extends TestCase
         $this->assertSame('Updated Student', $student->full_name);
         $this->assertSame('BS Computer Science', $student->course);
         $this->assertFalse($student->is_active);
-        $this->assertNull($student->password);
+        $this->assertTrue(Hash::check($temporaryPassword, $student->password));
     }
 
     public function test_student_administration_rejects_duplicate_identity_and_non_admin_access(): void
@@ -306,6 +334,43 @@ class AdminSetupTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'unauthorized.student@example.com']);
     }
 
+    public function test_admin_can_reset_an_account_password_and_logs_no_secret(): void
+    {
+        $student = User::where('role', 'student')->firstOrFail();
+
+        $response = $this->post(route('admin.students.password.reset', $student))
+            ->assertRedirect(route('admin.students.index'))
+            ->assertSessionHas('temporary_password', fn (mixed $password): bool => is_string($password) && strlen($password) === 24);
+
+        $temporaryPassword = $response->getSession()->get('temporary_password');
+        $student->refresh();
+        $this->assertTrue($student->must_change_password);
+        $this->assertTrue(Hash::check($temporaryPassword, $student->password));
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'student.temporary_password_reset',
+            'target_type' => 'student',
+            'target_id' => $student->id,
+            'metadata' => null,
+        ]);
+    }
+
+    public function test_admin_activity_page_is_read_only_and_role_protected(): void
+    {
+        $this->get(route('admin.activity.index'))
+            ->assertOk()
+            ->assertSee('Activity log')
+            ->assertSee('Successful account, office, service, and queue changes');
+
+        foreach (['student', 'staff'] as $role) {
+            $user = User::where('role', $role)->firstOrFail();
+            $this->actingAs($user)->get(route('admin.activity.index'))->assertForbidden();
+        }
+
+        $activityRoute = Route::getRoutes()->getByName('admin.activity.index');
+        $this->assertNotNull($activityRoute);
+        $this->assertSame([], array_intersect(['POST', 'PATCH', 'PUT', 'DELETE'], $activityRoute->methods()));
+    }
+
     public function test_admin_can_search_student_records_without_exposing_other_roles(): void
     {
         $this->get(route('admin.students.index', ['search' => 'student001']))
@@ -344,6 +409,12 @@ class AdminSetupTest extends TestCase
         $owner = User::where('email', 'owner@example.com')->firstOrFail();
         $this->assertSame('admin', $owner->role);
         $this->assertTrue(Hash::check('a-strong-local-password', $owner->password));
+        $this->assertDatabaseHas('audit_logs', [
+            'actor_id' => null,
+            'action' => 'admin.created',
+            'target_id' => $owner->id,
+            'metadata' => null,
+        ]);
 
         $this->artisan('queue-it:create-admin')
             ->expectsOutputToContain('An administrator already exists')

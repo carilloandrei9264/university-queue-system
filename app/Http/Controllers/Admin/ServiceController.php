@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Service;
+use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -20,18 +22,38 @@ class ServiceController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, ActivityLogger $activityLogger): RedirectResponse
     {
         $attributes = $this->validatedAttributes($request);
-        $service = Service::create($attributes);
+        $service = DB::transaction(function () use ($attributes, $request, $activityLogger): Service {
+            $service = Service::create($attributes);
+            $activityLogger->record(
+                $request->user(),
+                'service.created',
+                'service',
+                $service->id,
+                $service->department_id,
+            );
+
+            return $service;
+        });
 
         return redirect()->route('admin.services.index')
             ->with('status', "{$service->name} was created.");
     }
 
-    public function update(Request $request, Service $service): RedirectResponse
+    public function update(Request $request, Service $service, ActivityLogger $activityLogger): RedirectResponse
     {
-        $service->update($this->validatedAttributes($request, $service));
+        DB::transaction(function () use ($request, $service, $activityLogger): void {
+            $service->update($this->validatedAttributes($request, $service));
+            $activityLogger->record(
+                $request->user(),
+                'service.updated',
+                'service',
+                $service->id,
+                $service->department_id,
+            );
+        });
 
         return redirect()->route('admin.services.index')
             ->with('status', "{$service->name} was updated.");

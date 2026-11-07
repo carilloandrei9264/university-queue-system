@@ -3,9 +3,17 @@
 @section('title', 'Office staff')
 
 @section('content')
+    @if (is_string($temporaryPassword))
+        <section class="credential" role="alert">
+            <h2>Temporary password for {{ $temporaryAccountName }}</h2>
+            <p><code data-temporary-password>{{ $temporaryPassword }}</code></p>
+            <p>This password is shown once. Share it securely. The staff member must change it when they sign in.</p>
+        </section>
+    @endif
+
     <section>
         <h2>Add staff account</h2>
-        <p class="muted">Local demo passwords only. Production accounts will use the university sign-in integration.</p>
+        <p class="muted">A strong temporary password is generated automatically and shown once after creation. Give it to the staff member through a secure channel; they must change it at first sign-in.</p>
         <form method="POST" action="{{ route('admin.staff.store') }}">
             @csrf
             <label for="new-full-name">Full name</label>
@@ -19,10 +27,6 @@
                     <option value="{{ $department->id }}">{{ $department->name }}</option>
                 @endforeach
             </select>
-            <label for="new-password">Temporary password (minimum 12 characters)</label>
-            <input id="new-password" name="password" type="password" minlength="12" autocomplete="new-password" required>
-            <label for="new-password-confirmation">Confirm temporary password</label>
-            <input id="new-password-confirmation" name="password_confirmation" type="password" minlength="12" autocomplete="new-password" required>
             <input name="is_active" type="hidden" value="1">
             <button type="submit">Add staff account</button>
         </form>
@@ -47,16 +51,16 @@
                             </option>
                         @endforeach
                     </select>
-                    <label for="password-{{ $staff->id }}">New password (leave blank to keep current)</label>
-                    <input id="password-{{ $staff->id }}" name="password" type="password" minlength="12" autocomplete="new-password">
-                    <label for="password-confirmation-{{ $staff->id }}">Confirm new password</label>
-                    <input id="password-confirmation-{{ $staff->id }}" name="password_confirmation" type="password" minlength="12" autocomplete="new-password">
                     <input name="is_active" type="hidden" value="0">
                     <label class="inline">
                         <input name="is_active" type="checkbox" value="1" @checked($staff->is_active)>
                         Active
                     </label>
                     <button type="submit">Save staff account</button>
+                </form>
+                <form method="POST" action="{{ route('admin.staff.password.reset', $staff) }}">
+                    @csrf
+                    <button type="submit">Issue new temporary password</button>
                 </form>
             </div>
         @empty

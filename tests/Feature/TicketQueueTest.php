@@ -42,6 +42,7 @@ class TicketQueueTest extends TestCase
         $this->assertSame('AMS-002', $second->code);
         $this->assertSame('2026-11-07', $first->queue_date->toDateString());
         $this->assertSame(2, DB::table('daily_counters')->where('department_id', $service->department_id)->value('last_number'));
+        $this->assertSame(2, DB::table('audit_logs')->where('action', 'ticket.created')->count());
 
         try {
             $queue->createTicket($firstStudent, $service->id);
@@ -51,6 +52,40 @@ class TicketQueueTest extends TestCase
         }
 
         Carbon::setTestNow();
+    }
+
+    public function test_successful_ticket_mutations_are_audited_and_failed_actions_are_not(): void
+    {
+        $queue = app(TicketQueueService::class);
+        $service = $this->serviceFor('AMS');
+        $student = $this->student('student001@example.com');
+        $staff = User::where('email', 'admission.staff@example.com')->firstOrFail();
+
+        $ticket = $queue->createTicket($student, $service->id);
+        $queue->callNext($staff);
+        $queue->skipTicket($staff, $ticket->id);
+        $queue->recallTicket($staff, $ticket->id);
+        $queue->completeTicket($staff, $ticket->id);
+
+        $cancelledTicket = $queue->createTicket($student, $service->id);
+        $queue->cancelTicket($student, $cancelledTicket->id);
+
+        $this->assertSame([
+            'ticket.created',
+            'ticket.called',
+            'ticket.skipped',
+            'ticket.recalled',
+            'ticket.completed',
+            'ticket.created',
+            'ticket.cancelled',
+        ], DB::table('audit_logs')->orderBy('id')->pluck('action')->all());
+
+        try {
+            $queue->completeTicket($staff, $ticket->id);
+            $this->fail('A completed ticket cannot be completed a second time.');
+        } catch (ValidationException) {
+            $this->assertSame(7, DB::table('audit_logs')->count());
+        }
     }
 
     public function test_ticket_numbers_restart_for_a_new_manila_queue_date(): void

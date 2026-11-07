@@ -3,9 +3,17 @@
 @section('title', 'Students')
 
 @section('content')
+    @if (is_string($temporaryPassword))
+        <section class="credential" role="alert">
+            <h2>Temporary password for {{ $temporaryAccountName }}</h2>
+            <p><code data-temporary-password>{{ $temporaryPassword }}</code></p>
+            <p>This password is shown once. Share it securely. The student must change it when they sign in.</p>
+        </section>
+    @endif
+
     <section>
-        <h2>Add student record</h2>
-        <p class="muted">This creates a profile only. No password is set or sent, and this account cannot sign in until an authentication method is configured.</p>
+        <h2>Add student account</h2>
+        <p class="muted">A strong temporary password is generated automatically and shown once after creation. Give it to the student through a secure channel; they must change it at first sign-in.</p>
         <form method="POST" action="{{ route('admin.students.store') }}">
             @csrf
             <label for="new-full-name">Full name</label>
@@ -17,7 +25,7 @@
             <label for="new-course">Course</label>
             <input id="new-course" name="course" type="text" maxlength="255">
             <input name="is_active" type="hidden" value="1">
-            <button type="submit">Add student record</button>
+            <button type="submit">Create student account</button>
         </form>
     </section>
 
@@ -47,6 +55,10 @@
                         Active
                     </label>
                     <button type="submit">Save student record</button>
+                </form>
+                <form method="POST" action="{{ route('admin.students.password.reset', $student) }}">
+                    @csrf
+                    <button type="submit">Issue new temporary password</button>
                 </form>
             </div>
         @empty

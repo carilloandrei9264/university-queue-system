@@ -13,7 +13,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - Student ticket creation and cancellation, plus staff call-next, complete, skip, and recall actions with transaction-locked daily numbering.
 - Public office queue displays with automatic refresh, showing the serving and next waiting ticket codes without student details.
 - Student ticket status and staff queue lists refresh automatically without reloading the page.
-- Admins can create, edit, and deactivate passwordless student profile records; sign-in for these accounts awaits a secure credential flow or university identity adapter. The activity log remains planned.
+- Admins can create, edit, and deactivate student and staff accounts. Generated temporary passwords are shown once on create/reset, hashed at rest, and require a first-sign-in change.
+- Added a searchable, read-only admin activity log for account, department, service, and ticket mutations; audit rows are written transactionally and exclude credentials.
+- Added the forced password-change screen and access middleware; updated the account provisioning and database documentation for temporary credentials and audit records.
 - Recorded the decision to keep polling for now and evaluate Laravel Reverb only when pilot needs and hosting support justify WebSockets.
 
 ## [0.0.0] - 2026-11-06

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -79,6 +80,76 @@ class AuthenticationTest extends TestCase
                     ->assertForbidden();
             }
         }
+    }
+
+    public function test_temporary_password_requires_change_before_accessing_the_app(): void
+    {
+        $student = User::where('email', 'student001@example.com')->firstOrFail();
+        $student->forceFill([
+            'password' => 'temporary-account-password',
+            'must_change_password' => true,
+        ])->save();
+
+        $this->post('/login', [
+            'email' => $student->email,
+            'password' => 'temporary-account-password',
+        ])->assertRedirect(route('password.change'));
+
+        $this->get(route('student.dashboard'))->assertRedirect(route('password.change'));
+        $this->get(route('password.change'))->assertOk()->assertSee('Change your temporary password');
+
+        $this->post(route('password.change.update'), [
+            'current_password' => 'temporary-account-password',
+            'password' => 'a-new-secure-account-password',
+            'password_confirmation' => 'a-new-secure-account-password',
+        ])->assertRedirect(route('dashboard'));
+
+        $student->refresh();
+        $this->assertFalse($student->must_change_password);
+        $this->assertTrue(Hash::check('a-new-secure-account-password', $student->password));
+        $this->assertDatabaseHas('audit_logs', [
+            'actor_id' => $student->id,
+            'action' => 'account.password_changed',
+            'target_id' => $student->id,
+            'metadata' => null,
+        ]);
+
+        $this->post('/logout')->assertRedirect(route('login'));
+        $this->post('/login', [
+            'email' => $student->email,
+            'password' => 'temporary-account-password',
+        ])->assertSessionHasErrors('email');
+        $this->post('/login', [
+            'email' => $student->email,
+            'password' => 'a-new-secure-account-password',
+        ])->assertRedirect(route('student.dashboard'));
+    }
+
+    public function test_password_change_requires_current_password_confirmation_and_difference(): void
+    {
+        $student = User::where('email', 'student001@example.com')->firstOrFail();
+        $student->forceFill([
+            'password' => 'temporary-account-password',
+            'must_change_password' => true,
+        ])->save();
+
+        $this->actingAs($student)
+            ->from(route('password.change'))
+            ->post(route('password.change.update'), [
+                'current_password' => 'wrong-password',
+                'password' => 'a-new-secure-account-password',
+                'password_confirmation' => 'a-new-secure-account-password',
+            ])
+            ->assertSessionHasErrors('current_password');
+
+        $this->actingAs($student)
+            ->from(route('password.change'))
+            ->post(route('password.change.update'), [
+                'current_password' => 'temporary-account-password',
+                'password' => 'temporary-account-password',
+                'password_confirmation' => 'temporary-account-password',
+            ])
+            ->assertSessionHasErrors('password');
     }
 
     public function test_staff_without_a_department_cannot_open_the_staff_dashboard(): void

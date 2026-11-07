@@ -5,50 +5,89 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\User;
+use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class StaffController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View|Response
     {
-        return view('admin.staff', [
+        $temporaryPassword = $request->session()->pull('temporary_password');
+        $response = response()->view('admin.staff', [
             'departments' => Department::orderBy('name')->get(),
             'staffMembers' => User::where('role', 'staff')->with('department')->orderBy('full_name')->get(),
+            'temporaryPassword' => $temporaryPassword,
+            'temporaryAccountName' => $request->session()->pull('temporary_account_name'),
         ]);
+
+        return is_string($temporaryPassword) ? $response->header('Cache-Control', 'no-store, private') : $response;
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, ActivityLogger $activityLogger): RedirectResponse
     {
         $attributes = $this->validatedAttributes($request);
         $attributes['role'] = 'staff';
         $attributes['email_verified_at'] = now();
+        $temporaryPassword = Str::password(24, symbols: false);
+        $attributes['password'] = $temporaryPassword;
+        $attributes['must_change_password'] = true;
 
-        $staff = User::create($attributes);
+        $staff = DB::transaction(function () use ($attributes, $request, $activityLogger): User {
+            $staff = User::create($attributes);
+            $activityLogger->record($request->user(), 'staff.created', 'staff', $staff->id, $staff->department_id);
+
+            return $staff;
+        });
 
         return redirect()->route('admin.staff.index')
-            ->with('status', "{$staff->full_name} was created as office staff.");
+            ->with('status', "{$staff->full_name} was created as office staff.")
+            ->with('temporary_password', $temporaryPassword)
+            ->with('temporary_account_name', $staff->full_name);
     }
 
-    public function update(Request $request, User $staff): RedirectResponse
+    public function update(Request $request, User $staff, ActivityLogger $activityLogger): RedirectResponse
     {
         abort_unless($staff->role === 'staff', 404);
 
         $attributes = $this->validatedAttributes($request, $staff);
-        $password = $attributes['password'] ?? null;
-        unset($attributes['password']);
-
-        if ($password !== null && $password !== '') {
-            $attributes['password'] = Hash::make($password);
-        }
-
-        $staff->update($attributes);
+        DB::transaction(function () use ($request, $staff, $attributes, $activityLogger): void {
+            $staff->update($attributes);
+            $activityLogger->record($request->user(), 'staff.updated', 'staff', $staff->id, $staff->department_id);
+        });
 
         return redirect()->route('admin.staff.index')
             ->with('status', "{$staff->full_name} was updated.");
+    }
+
+    public function resetPassword(Request $request, User $staff, ActivityLogger $activityLogger): RedirectResponse
+    {
+        abort_unless($staff->role === 'staff', 404);
+        $temporaryPassword = Str::password(24, symbols: false);
+
+        DB::transaction(function () use ($request, $staff, $activityLogger, $temporaryPassword): void {
+            $staff->forceFill([
+                'password' => $temporaryPassword,
+                'must_change_password' => true,
+            ])->save();
+            $activityLogger->record(
+                $request->user(),
+                'staff.temporary_password_reset',
+                'staff',
+                $staff->id,
+                $staff->department_id,
+            );
+        });
+
+        return redirect()->route('admin.staff.index')
+            ->with('status', "A new temporary password was issued for {$staff->full_name}.")
+            ->with('temporary_password', $temporaryPassword)
+            ->with('temporary_account_name', $staff->full_name);
     }
 
     private function validatedAttributes(Request $request, ?User $staff = null): array
@@ -79,12 +118,7 @@ class StaffController extends Controller
                 }),
             ],
             'is_active' => ['required', 'boolean'],
-            'password' => [$staff === null ? 'required' : 'nullable', 'string', 'min:12', 'confirmed'],
         ];
-
-        if ($staff !== null) {
-            $rules['password'] = ['nullable', 'string', 'min:12', 'confirmed'];
-        }
 
         return $request->validate($rules);
     }

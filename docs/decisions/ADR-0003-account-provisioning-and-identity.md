@@ -35,7 +35,7 @@ The project cannot yet obtain the university's sign-in or student-data interface
 - Authentication is an adapter boundary. An adapter may support the institution's documented protocol, such as OpenID Connect/OAuth 2.0, SAML 2.0, or LDAP, only after requirements and infrastructure are confirmed. These are examples, not a promise to support every provider automatically.
 - Student-information imports/synchronization (for example, an API or approved file export) are separate from sign-in. EDI is not treated as an authentication protocol.
 - External identity uses a stable provider subject mapped to one local user. Email alone is not used as the durable identity key; local role and department remain controlled by the app's admin.
-- If the pilot uses local passwords, admins must not set or view them. A secure invitation or temporary-credential and reset process must be designed before production; credentials are never sent through chat or logged.
+- Local accounts use an app-generated temporary password shown once after creation or reset; the user must change it at first sign-in. Admins cannot choose or retrieve passwords, and the activity log never records credentials. Share the temporary password only through a secure channel. Confirm the production credential and identity approach with university IT before onboarding real users.
 
 ## Consequences
 

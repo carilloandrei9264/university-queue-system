@@ -15,6 +15,8 @@ use Illuminate\Validation\ValidationException;
 
 class TicketQueueService
 {
+    public function __construct(private readonly ActivityLogger $activityLogger) {}
+
     public function createTicket(User $student, int $serviceId): Ticket
     {
         return DB::transaction(function () use ($student, $serviceId): Ticket {
@@ -70,7 +72,7 @@ class TicketQueueService
             $number = $counter->last_number + 1;
             $counter->update(['last_number' => $number]);
 
-            return Ticket::create([
+            $ticket = Ticket::create([
                 'department_id' => $department->id,
                 'service_id' => $service->id,
                 'student_id' => $lockedStudent->id,
@@ -79,6 +81,9 @@ class TicketQueueService
                 'code' => $department->prefix.'-'.str_pad((string) $number, 3, '0', STR_PAD_LEFT),
                 'status' => TicketStatus::Waiting->value,
             ]);
+            $this->activityLogger->record($lockedStudent, 'ticket.created', 'ticket', $ticket->id, $department->id);
+
+            return $ticket;
         }, attempts: 3);
     }
 
@@ -115,6 +120,7 @@ class TicketQueueService
             $ticket->called_at = now();
             $ticket->handled_by = $lockedStaff->id;
             $ticket->save();
+            $this->activityLogger->record($lockedStaff, 'ticket.called', 'ticket', $ticket->id, $department->id);
 
             return $ticket->fresh(['department', 'service', 'student']);
         }, attempts: 3);
@@ -135,6 +141,7 @@ class TicketQueueService
             $this->transition($ticket, TicketStatus::Cancelled);
             $ticket->cancelled_at = now();
             $ticket->save();
+            $this->activityLogger->record($lockedStudent, 'ticket.cancelled', 'ticket', $ticket->id, $ticket->department_id);
 
             return $ticket;
         }, attempts: 3);
@@ -170,6 +177,7 @@ class TicketQueueService
             $ticket->completed_at = null;
             $ticket->handled_by = $lockedStaff->id;
             $ticket->save();
+            $this->activityLogger->record($lockedStaff, 'ticket.recalled', 'ticket', $ticket->id, $ticket->department_id);
 
             return $ticket->fresh(['department', 'service', 'student']);
         }, attempts: 3);
@@ -198,6 +206,8 @@ class TicketQueueService
             $ticket->completed_at = now();
             $ticket->handled_by = $lockedStaff->id;
             $ticket->save();
+            $action = $nextStatus === TicketStatus::Completed ? 'ticket.completed' : 'ticket.skipped';
+            $this->activityLogger->record($lockedStaff, $action, 'ticket', $ticket->id, $ticket->department_id);
 
             return $ticket->fresh(['department', 'service', 'student']);
         }, attempts: 3);

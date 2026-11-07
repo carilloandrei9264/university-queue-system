@@ -3,7 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
+use App\Services\ActivityLogger;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -13,7 +15,7 @@ class CreateFirstAdmin extends Command
 
     protected $description = 'Create the first administrator from the server terminal';
 
-    public function handle(): int
+    public function handle(ActivityLogger $activityLogger): int
     {
         if (User::where('role', 'admin')->exists()) {
             $this->components->error('An administrator already exists. This command only creates the first administrator.');
@@ -47,14 +49,17 @@ class CreateFirstAdmin extends Command
             return self::FAILURE;
         }
 
-        User::create([
-            'full_name' => $fullName,
-            'email' => $email,
-            'password' => $password,
-            'role' => 'admin',
-            'is_active' => true,
-            'email_verified_at' => now(),
-        ]);
+        DB::transaction(function () use ($fullName, $email, $password, $activityLogger): void {
+            $admin = User::create([
+                'full_name' => $fullName,
+                'email' => $email,
+                'password' => $password,
+                'role' => 'admin',
+                'is_active' => true,
+                'email_verified_at' => now(),
+            ]);
+            $activityLogger->record(null, 'admin.created', 'user', $admin->id);
+        });
 
         $this->components->info("Administrator account created for {$email}.");
 

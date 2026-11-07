@@ -1,14 +1,17 @@
 <?php
 
+use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\PasswordChangeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Display\QueueDisplayController;
 use App\Http\Controllers\Staff\QueueController;
 use App\Http\Controllers\Student\TicketController;
+use App\Http\Middleware\EnsurePasswordChange;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/display', [QueueDisplayController::class, 'index'])->name('display.index');
@@ -26,6 +29,13 @@ Route::middleware('guest')->group(function (): void {
 });
 
 Route::middleware('auth')->group(function (): void {
+    Route::get('/password/change', [PasswordChangeController::class, 'edit'])->name('password.change');
+    Route::post('/password/change', [PasswordChangeController::class, 'update'])
+        ->middleware('throttle:5,1')
+        ->name('password.change.update');
+});
+
+Route::middleware(['auth', EnsurePasswordChange::class])->group(function (): void {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
@@ -58,8 +68,13 @@ Route::middleware('auth')->group(function (): void {
         Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
         Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
         Route::patch('/staff/{staff}', [StaffController::class, 'update'])->name('staff.update');
+        Route::post('/staff/{staff}/temporary-password', [StaffController::class, 'resetPassword'])
+            ->name('staff.password.reset');
         Route::get('/students', [StudentController::class, 'index'])->name('students.index');
         Route::post('/students', [StudentController::class, 'store'])->name('students.store');
         Route::patch('/students/{student}', [StudentController::class, 'update'])->name('students.update');
+        Route::post('/students/{student}/temporary-password', [StudentController::class, 'resetPassword'])
+            ->name('students.password.reset');
+        Route::get('/activity', [ActivityLogController::class, 'index'])->name('activity.index');
     });
 });

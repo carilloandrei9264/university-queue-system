@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Department;
+use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -18,17 +20,25 @@ class DepartmentController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, ActivityLogger $activityLogger): RedirectResponse
     {
-        $department = Department::create($this->validatedAttributes($request));
+        $department = DB::transaction(function () use ($request, $activityLogger): Department {
+            $department = Department::create($this->validatedAttributes($request));
+            $activityLogger->record($request->user(), 'department.created', 'department', $department->id, $department->id);
+
+            return $department;
+        });
 
         return redirect()->route('admin.departments.index')
             ->with('status', "{$department->name} was created.");
     }
 
-    public function update(Request $request, Department $department): RedirectResponse
+    public function update(Request $request, Department $department, ActivityLogger $activityLogger): RedirectResponse
     {
-        $department->update($this->validatedAttributes($request, $department));
+        DB::transaction(function () use ($request, $department, $activityLogger): void {
+            $department->update($this->validatedAttributes($request, $department));
+            $activityLogger->record($request->user(), 'department.updated', 'department', $department->id, $department->id);
+        });
 
         return redirect()->route('admin.departments.index')
             ->with('status', "{$department->name} was updated.");

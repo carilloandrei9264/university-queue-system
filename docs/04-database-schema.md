@@ -8,7 +8,7 @@ This is the relational data model for a SQL database: MySQL by default, or Maria
 
 Field names are written in camelCase here. In the migrations, use Laravel's snake_case (`department_id`, `created_at`) and the standard `id`, `created_at` and `updated_at` columns.
 
-**MVP schema.** The target pilot schema includes `departments`, `services`, `users`, `tickets`, `dailyCounters` and `audit_logs`. Admin-managed student profiles now use the existing `users` table. The existing first migrations do not yet include the proposed external-identity fields or audit table; add them only through a reviewed follow-up migration. Items for deferred features are marked below and are added by later migrations when the feature is built.
+**MVP schema.** The pilot schema includes `departments`, `services`, `users`, `tickets`, `dailyCounters` and `audit_logs`. Admin-managed student and staff accounts use the `users` table. External-identity fields remain future work; items for deferred features are marked below and are added by later migrations when the feature is built.
 
 ## Entity relationship diagram
 
@@ -51,7 +51,7 @@ erDiagram
 
 ### users
 
-The `password` column holds a hash only when the configured authentication mode uses local passwords. Admins provision users but never set or view passwords. An external identity maps to a local user using a provider name and stable provider subject; email alone is not a durable external identity key. See [ADR-0003](decisions/ADR-0003-account-provisioning-and-identity.md).
+The `password` column holds a hash only when the configured authentication mode uses local passwords. For local accounts, the app generates a temporary password, shows it once after creation/reset, and requires a change at first sign-in; admins cannot choose or retrieve it later. An external identity maps to a local user using a provider name and stable provider subject; email alone is not a durable external identity key. See [ADR-0003](decisions/ADR-0003-account-provisioning-and-identity.md).
 
 | Field | Type | Rules |
 |-------|------|-------|
@@ -65,6 +65,8 @@ The `password` column holds a hash only when the configured authentication mode 
 | identityProvider | text | nullable provider key for an external identity |
 | externalSubject | text | nullable stable subject from that provider; unique with identityProvider |
 | isActive | boolean | default true |
+| mustChangePassword | boolean | default false; temporary local credentials require a change before other authenticated routes |
+| password | text | nullable hash; never store the temporary password as plaintext |
 | createdAt | timestamp | |
 
 When external identity is configured, `identityProvider` and `externalSubject` are either both null or both present. Add a unique constraint across the pair; email remains a contact/lookup field, not the external identity key.
@@ -123,11 +125,10 @@ Required for the MVP (ADM-08). Insert audit records in the same transaction as t
 |-------|------|-------|
 | id | id | primary key |
 | actorId | id | nullable user foreign key; null for an automated/system action |
-| action | text | allow-listed verb such as `student.created`, `ticket.called`, or `service.deactivated` |
+| action | text | business event such as `student.created`, `ticket.called`, or `service.updated` |
 | targetType, targetId | text, id | type and identifier of the changed record |
 | departmentId | id | nullable department context |
-| requestId | text | optional correlation identifier, not a credential |
-| metadata | JSON | allow-listed non-sensitive changes only; never passwords, tokens, session data, or full request bodies |
+| metadata | JSON | nullable; reserved for deliberately allow-listed non-sensitive details, never passwords, tokens, session data, or full request bodies |
 | createdAt | timestamp | indexed for chronological filtering |
 
 Use an index on `(createdAt, id)` and useful actor/department/action filters. The retention period and archival policy must be agreed with the university before real data is used.

@@ -41,6 +41,10 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        if (Auth::user()->must_change_password) {
+            return redirect()->route('password.change');
+        }
+
         $dashboardRoute = match (Auth::user()->role) {
             'student' => 'student.dashboard',
             'staff' => 'staff.dashboard',

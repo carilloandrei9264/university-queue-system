@@ -27,7 +27,7 @@ Write each case before building the feature. IDs link back to [requirements](02-
 | T-AUTH-05b | AUTH-05 | As student, send the "call next" request directly | Refused (403) |
 | T-AUTH-05c | AUTH-05 | As staff of department A, try to call next in department B | Refused (`forbidden`) |
 | T-AUTH-04 | AUTH-04 | Search the app for any admin-creation path | None exists |
-| T-AUTH-07 | AUTH-07 | Review login, account management, error responses and activity logs with local and external auth modes | No admin password field or secret leakage; local credentials are hashed and external passwords are never collected |
+| T-AUTH-07 | AUTH-07 | Create/reset a local account, sign in with its one-time password, change it, then inspect forms, logs, and responses | Generated credential is shown once, cached responses are disabled, password is hashed and forced to change, and no secret is logged or retrievable; external passwords are never collected |
 | T-AUTH-08 | AUTH-08 | Sign in through a configured test identity adapter using a stable external subject | Existing local role is preserved; unknown or inactive users are refused |
 | T-ADM-07 | ADM-07 | Admin creates and edits student accounts with unique identity data; try duplicates and role escalation | Valid student account is managed; duplicates and privilege escalation are rejected |
 | T-TKT-02 | TKT-02 | Take tickets on two different days (change the test clock) | Number restarts at 001, per department |
@@ -43,8 +43,8 @@ Write each case before building the feature. IDs link back to [requirements](02-
 | T-DSP-01 | DSP-01 | Open the public display while tickets exist | No student name, ID number or email appears in the page or in its refresh response |
 | T-DSP-02 | DSP-02 | Call a ticket with the display open | Display updates by itself within one refresh interval |
 | T-ADM-06 | ADM-06 | Deactivate a department that has old tickets | Old tickets still show the department name |
-| T-ADM-08 | ADM-08 | Create, deactivate, call, complete, cancel, skip and recall records; inspect the admin log | Each successful mutation is recorded once with actor/action/target/time; no password, token or unnecessary personal values appear; refresh polling does not create entries |
-| T-ADM-08b | ADM-08 | Attempt to edit or delete an audit entry through a route or direct request | Refused; entries remain unchanged |
+| T-ADM-08 | ADM-08 | Create/update/deactivate accounts and catalog records; create, call, complete, cancel, skip and recall tickets; inspect the admin log | Each successful mutation is recorded once with actor/action/target/time; no password, token or unnecessary personal values appear; refresh polling does not create entries |
+| T-ADM-08b | ADM-08 | Attempt to edit or delete an audit entry through an application route | No mutation route exists; entries remain unchanged |
 | T-FBK-01 | FBK-01 | Rate a completed ticket twice | Second rejected |
 | T-NFR-03a | NFR-03 | Turn off the network on each data screen | Offline banner, last data marked stale |
 | T-NFR-03b | NFR-03 | Throttle to slow 3G | "Still loading" message after 4 seconds |

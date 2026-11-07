@@ -24,6 +24,10 @@
         .error { color: #9b1c1c; }
         .muted { color: #475467; }
         .inline { align-items: center; display: flex; gap: 0.5rem; }
+        .credential { background: #fff7e0; border: 1px solid #d99b00; border-radius: 0.5rem; padding: 1rem; }
+        .credential code { display: inline-block; font-size: 1.15rem; font-weight: 700; letter-spacing: 0.04em; overflow-wrap: anywhere; user-select: all; }
+        table { border-collapse: collapse; min-width: 40rem; width: 100%; }
+        th, td { border-bottom: 1px solid #d0d5dd; padding: 0.65rem; text-align: left; }
         @media (min-width: 48rem) {
             input[type="text"], input[type="email"], input[type="password"], select { max-width: 32rem; }
         }
@@ -44,6 +48,7 @@
             <a href="{{ route('admin.services.index') }}">Services</a>
             <a href="{{ route('admin.staff.index') }}">Office staff</a>
             <a href="{{ route('admin.students.index') }}">Students</a>
+            <a href="{{ route('admin.activity.index') }}">Activity log</a>
         </nav>
 
         @if (session('status'))

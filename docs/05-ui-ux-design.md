@@ -101,7 +101,7 @@ Enrollment takes a student through several offices, one after another. A student
 | Display board | Public | One tile per department: code, counter, next few | DSP-01 to DSP-04 |
 | Admin: catalog | Admin | Tables for departments and services with add and edit forms | ADM-01, ADM-02, ADM-06 |
 | Admin: staff | Admin | Staff table, create form | ADM-03 |
-| Admin: students | Admin | Searchable student table, create/edit/deactivate form; no password controls (implemented) | ADM-07, AUTH-07 |
+| Admin: students | Admin | Searchable student accounts, create/edit/deactivate, issue a one-time generated temporary password on create/reset | ADM-07, AUTH-07 |
 | Admin: activity | Admin | Filterable, read-only chronological business activity log | ADM-08 |
 | Admin: feedback and stats | Admin | Feedback list, stat tiles | ADM-04, ADM-05 |
 
