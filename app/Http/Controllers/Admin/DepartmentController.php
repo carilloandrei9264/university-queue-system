@@ -13,10 +13,23 @@ use Illuminate\View\View;
 
 class DepartmentController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+        ]);
+        $search = trim($validated['search'] ?? '');
+
         return view('admin.departments', [
-            'departments' => Department::withCount(['services', 'staff'])->orderBy('name')->get(),
+            'departments' => Department::query()
+                ->withCount(['services', 'staff'])
+                ->when($search !== '', fn ($query) => $query->where(function ($query) use ($search): void {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('prefix', 'like', "%{$search}%");
+                }))
+                ->orderBy('name')
+                ->paginate(15)
+                ->withQueryString(),
         ]);
     }
 

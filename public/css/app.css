@@ -85,11 +85,13 @@ h2 { font-size: 1.2rem; letter-spacing: -0.015em; }
 p { margin-top: 0.5rem; }
 
 .app-header {
-    position: relative;
-    z-index: 1;
+    position: sticky;
+    z-index: 30;
+    top: 0;
     border-bottom: 0.25rem solid var(--gold-500);
     background: var(--blue-700);
     color: #fff;
+    box-shadow: 0 0.25rem 0.8rem rgb(0 32 95 / 16%);
 }
 
 .header-inner {
@@ -115,6 +117,13 @@ p { margin-top: 0.5rem; }
 .header-inner form { margin: 0; }
 .header-inner button { min-height: 2.5rem; border: 1px solid rgb(255 255 255 / 35%); background: transparent; }
 .header-inner button:hover { background: rgb(255 255 255 / 12%); }
+.app-header .header-inner .header-signout {
+    min-width: 6rem;
+    border: 1px solid #fff;
+    background: #fff;
+    color: var(--blue-900);
+}
+.app-header .header-inner .header-signout:hover { border-color: var(--gold-500); background: var(--gold-500); color: var(--blue-900); }
 
 .page-shell {
     width: min(100% - 2rem, 72rem);
@@ -318,9 +327,9 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem;
-    margin: 0 0 1.5rem;
+    margin: 0 0 1rem;
     border-bottom: 1px solid var(--line);
-    padding-bottom: 0.75rem;
+    padding: 0 0 0.6rem;
 }
 
 .admin-nav a {
@@ -335,7 +344,99 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
 }
 
 .admin-nav a:hover, .admin-nav a[aria-current="page"] { background: var(--blue-100); color: var(--blue-900); }
-.admin-page-title { margin: 0 0 1rem; }
+.admin-page-title { margin: 0 0 0.8rem; }
+.admin-content > .status, .admin-content > .error { margin: 0 0 0.8rem; }
+.admin-content > section { margin: 0; }
+.admin-content > section + section,
+.admin-content > .admin-create + section,
+.admin-content > section + .admin-create,
+.admin-content > .admin-create + .admin-create { margin-top: 0.8rem; }
+.admin-content > section,
+.admin-create { padding: clamp(0.9rem, 2vw, 1.2rem); }
+.admin-content h2 { margin: 0 0 0.65rem; }
+.admin-content p { margin-block: 0.35rem 0.75rem; }
+.admin-list-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.65rem; }
+.admin-list-heading h2, .admin-list-heading p { margin: 0; }
+.admin-list-heading .muted { font-size: 0.88rem; }
+.admin-search { display: flex; min-width: min(100%, 22rem); align-items: center; gap: 0.45rem; }
+.admin-search input { min-width: 0; min-height: 2.6rem !important; }
+.admin-search button { min-height: 2.6rem; padding: 0.5rem 0.8rem; }
+.admin-search a { white-space: nowrap; }
+.admin-create {
+    margin-bottom: 0.8rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+.admin-create > summary {
+    display: flex;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--blue-700);
+    cursor: pointer;
+    font-weight: 750;
+    list-style-position: inside;
+}
+.admin-create[open] > summary { margin-bottom: 0.7rem; border-bottom: 1px solid var(--line); padding-bottom: 0.65rem; }
+.summary-action { color: var(--ink-600); font-size: 0.88rem; font-weight: 650; }
+.admin-record-list { display: grid; gap: 0.45rem; }
+.admin-record { border: 1px solid var(--line); border-radius: 0.65rem; background: #fff; }
+.admin-record[open] { border-color: #9ab2dc; }
+.admin-record-summary {
+    display: grid;
+    min-height: 3.2rem;
+    align-items: center;
+    gap: 0.25rem 0.8rem;
+    grid-template-columns: minmax(9rem, 0.7fr) minmax(12rem, 1.6fr) auto;
+    padding: 0.55rem 0.8rem;
+    cursor: pointer;
+    list-style: none;
+}
+.admin-record-summary::-webkit-details-marker { display: none; }
+.admin-record-summary::after { color: var(--blue-700); content: "+"; font-size: 1.2rem; font-weight: 700; grid-column: 3; grid-row: 1; justify-self: end; }
+.admin-record[open] > .admin-record-summary::after { content: "−"; }
+.admin-record-name { color: var(--blue-900); font-weight: 750; }
+.admin-record-meta { min-width: 0; color: var(--ink-600); font-size: 0.9rem; overflow-wrap: anywhere; }
+.admin-record-name .prefix {
+    display: inline-block;
+    margin-left: 0.35rem;
+    border-radius: 999px;
+    background: var(--blue-100);
+    color: var(--blue-900);
+    font-size: 0.78rem;
+    font-weight: 800;
+    padding: 0.12rem 0.5rem;
+    vertical-align: 0.08em;
+}
+.admin-form-grid {
+    display: grid;
+    align-items: end;
+    gap: 0.5rem 0.8rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 0.5rem 0.8rem 0.85rem;
+}
+.admin-form-grid label { margin-top: 0; }
+.admin-form-grid input:not([type="checkbox"]):not([type="radio"]), .admin-form-grid select { min-height: 2.55rem; }
+.admin-form-grid > button { justify-self: start; }
+.admin-record-actions { border-top: 1px solid var(--line); padding: 0.65rem 0.8rem; }
+.admin-record-actions form { margin: 0; }
+.admin-record-actions button, .admin-form-grid button { min-height: 2.5rem; }
+.admin-content .empty-state { padding: 0.85rem 1rem; }
+.admin-content .empty-state h2 { margin-bottom: 0.3rem; }
+.admin-content .empty-state p { margin-bottom: 0.25rem; }
+.admin-content nav[role="navigation"] { margin-top: 0.85rem; }
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    clip-path: inset(50%);
+}
 .record { border-top: 1px solid var(--line); margin-top: 1rem; padding-top: 1rem; }
 .inline { display: flex; align-items: center; gap: 0.55rem; }
 .inline input { width: auto !important; }
@@ -415,6 +516,13 @@ th { background: #f4f7fb; color: #354052; font-size: 0.85rem; }
     .queue-actions form, .queue-actions button { flex: 1; }
     .admin-nav { gap: 0.1rem; }
     .admin-nav a { padding-inline: 0.55rem; }
+    .admin-list-heading { align-items: stretch; flex-direction: column; }
+    .admin-search { width: 100%; }
+    .admin-record-summary { grid-template-columns: minmax(0, 1fr) auto; }
+    .admin-record-meta { grid-column: 1; grid-row: 2; }
+    .admin-record-summary::after { grid-column: 2; grid-row: 1; }
+    .admin-form-grid { grid-template-columns: 1fr; }
+    .admin-form-grid > button { width: 100%; }
     .display-shell, .display-footer { width: calc(100% - 1.25rem); }
     th, td { padding: 0.55rem; }
 }

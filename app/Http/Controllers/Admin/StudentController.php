@@ -35,7 +35,7 @@ class StudentController extends Controller
                     });
                 })
                 ->orderBy('full_name')
-                ->paginate(25)
+                ->paginate(15)
                 ->withQueryString(),
             'temporaryPassword' => $temporaryPassword,
             'temporaryAccountName' => $request->session()->pull('temporary_account_name'),

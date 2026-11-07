@@ -252,7 +252,7 @@ class AdminSetupTest extends TestCase
             ->assertOk()
             ->assertSee('Add student account')
             ->assertSee('generated automatically')
-            ->assertSee('Search by name, email, or student ID');
+            ->assertSee('Search students');
 
         $this->post(route('admin.students.store'), [
             'full_name' => 'New Student',
@@ -349,6 +349,47 @@ class AdminSetupTest extends TestCase
             ->assertOk()
             ->assertSee('No matching activity')
             ->assertSee('Clear filters');
+    }
+
+    public function test_catalog_and_staff_lists_can_be_searched(): void
+    {
+        $this->get(route('admin.departments.index', ['search' => 'AMS']))
+            ->assertOk()
+            ->assertSee('Admission')
+            ->assertDontSee('Registrar')
+            ->assertSee('Search departments');
+
+        $this->get(route('admin.services.index', ['search' => 'Transcript']))
+            ->assertOk()
+            ->assertSee('Transcript Request')
+            ->assertDontSee('Application Processing');
+
+        $this->get(route('admin.staff.index', ['search' => 'Admission Staff']))
+            ->assertOk()
+            ->assertSee('Admission Staff')
+            ->assertDontSee('Registrar Staff');
+    }
+
+    public function test_department_directory_is_paginated(): void
+    {
+        foreach (range(1, 13) as $number) {
+            Department::create([
+                'name' => "Additional Office {$number}",
+                'prefix' => 'X'.str_pad((string) $number, 3, '0', STR_PAD_LEFT),
+                'is_active' => true,
+            ]);
+        }
+
+        $firstPage = $this->get(route('admin.departments.index'));
+        $departments = $firstPage->viewData('departments');
+
+        $this->assertSame(15, $departments->perPage());
+        $this->assertTrue($departments->hasPages());
+        $firstPage->assertSee('Next');
+
+        $secondPage = $this->get(route('admin.departments.index', ['page' => 2]));
+        $secondPage->assertOk();
+        $this->assertSame(2, $secondPage->viewData('departments')->currentPage());
     }
 
     public function test_admin_can_reset_an_account_password_and_logs_no_secret(): void

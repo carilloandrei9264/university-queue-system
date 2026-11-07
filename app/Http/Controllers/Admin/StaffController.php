@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -18,10 +19,26 @@ class StaffController extends Controller
 {
     public function index(Request $request): View|Response
     {
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+        ]);
+        $search = trim($validated['search'] ?? '');
         $temporaryPassword = $request->session()->pull('temporary_password');
         $response = response()->view('admin.staff', [
             'departments' => Department::orderBy('name')->get(),
-            'staffMembers' => User::where('role', 'staff')->with('department')->orderBy('full_name')->get(),
+            'staffMembers' => User::query()
+                ->where('role', 'staff')
+                ->with('department')
+                ->when($search !== '', function (Builder $query) use ($search): void {
+                    $query->where(function (Builder $query) use ($search): void {
+                        $query->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%")
+                            ->orWhereHas('department', fn (Builder $departmentQuery) => $departmentQuery->where('name', 'like', "%{$search}%"));
+                    });
+                })
+                ->orderBy('full_name')
+                ->paginate(15)
+                ->withQueryString(),
             'temporaryPassword' => $temporaryPassword,
             'temporaryAccountName' => $request->session()->pull('temporary_account_name'),
         ]);

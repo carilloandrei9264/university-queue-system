@@ -7,17 +7,17 @@
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
 <body>
-    <header class="app-header">
+    <header class="app-header admin-header">
         <div class="header-inner">
             <a class="brand" href="{{ route('admin.dashboard') }}">NU QUEUE-IT</a>
             <span class="header-meta">Administration</span>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button class="secondary" type="submit">Sign out</button>
+                <button class="header-signout" type="submit">Sign out</button>
             </form>
         </div>
     </header>
-    <main class="page-shell">
+    <main class="page-shell admin-shell">
         <nav class="admin-nav" aria-label="Admin sections">
             <a href="{{ route('admin.dashboard') }}" @if (request()->routeIs('admin.dashboard')) aria-current="page" @endif>Overview</a>
             <a href="{{ route('admin.departments.index') }}" @if (request()->routeIs('admin.departments.*')) aria-current="page" @endif>Departments</a>
@@ -27,6 +27,7 @@
             <a href="{{ route('admin.activity.index') }}" @if (request()->routeIs('admin.activity.*')) aria-current="page" @endif>Activity</a>
         </nav>
 
+        <div class="admin-content">
         @if (session('status'))
             <p class="status success-state" data-state="success" role="status">{{ session('status') }}</p>
         @endif
@@ -44,6 +45,7 @@
 
         <h1 class="admin-page-title">@yield('title')</h1>
         @yield('content')
+        </div>
     </main>
     <script src="{{ asset('js/ui-states.js') }}" defer></script>
 </body>

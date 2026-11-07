@@ -21,6 +21,8 @@ Loading feedback is intentionally limited to in-progress form submissions and qu
 
 The admin overview now links directly to the existing office, service, staff, student, and activity-log pages. No unimplemented queue metrics or controls have been added.
 
+Admin catalog and account pages use collapsed create forms, searchable lists, and compact expandable records instead of rendering a full edit form for every item. Lists are paginated (15 records per page) to keep long directories manageable. The admin header stays visible while scrolling, and its sign-out control uses a high-contrast surface. The centered content width is retained while gaps within the admin content are reduced.
+
 ## Current design review (old NU Queue-It)
 
 The rebuild keeps the old visual identity and fixes how it works and how it is built. Screenshots are in [`assets/old-design/`](assets/old-design/). They were rendered with no backend and no internet, so web fonts and icon fonts fall back to defaults. The login, register and admin pages are PHP and could not be rendered here, so only their markup and CSS were reviewed.
