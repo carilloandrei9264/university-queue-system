@@ -2,7 +2,7 @@
 
 | Version | Status | Last updated |
 |---------|--------|--------------|
-| 0.3 | Draft | 2026-11-07 |
+| 0.4 | Draft | 2026-11-08 |
 
 Priority uses MoSCoW: **M**ust, **S**hould, **C**ould. "Must" items define v1.0.0. Each requirement has a stable ID used in issues, tests and commits. The first release for real users is a smaller MVP (a one-department pilot), defined in [MVP scope](#mvp-scope-pilot).
 
@@ -14,15 +14,16 @@ The first release for real users is a pilot that starts with **one department**.
 
 | # | MVP item | Requirements | Pilot notes |
 |---|----------|--------------|-------------|
-| 1 | Admin setup for one department, its services and staff | ADM-01 (name and prefix), ADM-02, ADM-03, ADM-06, AUTH-03, AUTH-04 | One department at first. |
-| 2 | Student sign-in, ticket creation, ticket status viewing | AUTH-01, AUTH-02, TKT-01, TKT-05, TKT-06 | University account sign-in (seeded records until it is connected). Status and people ahead, refreshed periodically. A waiting ticket can be cancelled. |
+| 1 | Admin setup for one department, its services, student and staff accounts | ADM-01, ADM-02, ADM-03, ADM-06, ADM-07, AUTH-03, AUTH-04, AUTH-07 | One department at first; admins provision accounts and assign roles. |
+| 2 | Student sign-in, ticket creation, ticket status viewing | AUTH-01, AUTH-02, AUTH-07, TKT-01, TKT-05, TKT-06 | Accounts are provisioned by an admin. University identity integration is added through a provider adapter when the institution's protocol is known. Status and people ahead refresh periodically. |
 | 3 | Staff limited to their assigned department, call next and complete | AUTH-05, STF-01, STF-02, STF-03, STF-04 | Department checks are enforced on the server. Staff can also skip a no-show and recall it. |
 | 4 | Public display of the ticket being served | DSP-01, DSP-02 | No student identity. Periodic refresh. |
 | 5 | Correct numbering and protection against simultaneous requests | TKT-02, TKT-03, TKT-04, STF-02 | Daily numbers per department, one active ticket per student, no duplicate numbers, no ticket called twice. Covered by concurrency tests. |
+| 6 | Admin activity log | ADM-08 | Successful account, catalog, and ticket-changing transactions are auditable without recording passwords, tokens, or unnecessary personal data. |
 
-Also in the MVP: NFR-01 to NFR-09, NFR-11 and NFR-12.
+Also in the MVP: NFR-01 to NFR-09, NFR-11 to NFR-14.
 
-**Deferred past the MVP:** guest tickets (AUTH-06), priority tickets (STF-07), feedback (FBK-01, ADM-04), statistics (ADM-05), multi-campus support, complex opening-hours rules (TKT-07), and real-time infrastructure. Until then, screens use simple periodic refresh.
+**Deferred past the MVP:** guest tickets (AUTH-06), priority tickets (STF-07), feedback (FBK-01, ADM-04), statistics (ADM-05), multi-campus support, complex opening-hours rules (TKT-07), and WebSocket delivery using Reverb. Until then, screens use simple periodic refresh. University SSO integration depends on the identity protocol the institution provides; it is not assumed to be available for the first pilot.
 
 **Not listed either way** (treated as after the MVP unless you decide otherwise): ticket history (TKT-08), the estimated wait part of TKT-05, counter label (STF-05), pause queue (STF-06), next tickets on the display (DSP-03) and sound (DSP-04).
 
@@ -38,12 +39,14 @@ Student, Staff (one department), Admin, Public screen (no login). See [00](00-pr
 
 | ID | Requirement | Pri | Acceptance criteria |
 |----|-------------|-----|---------------------|
-| AUTH-01 | Students sign in with their university account and do not register themselves. Student records (name, student ID, university email, course) come from the university. Seeded fake records are used until the university sign-in is connected ([ADR-0002](decisions/ADR-0002-university-sign-in.md)). | M | Student ID and email are unique, and a person who is not in the student records cannot sign in. |
+| AUTH-01 | Students do not self-register. An admin provisions their account, or an approved university identity integration matches them to an existing account. | M | Student ID and email are unique; only active, provisioned students can sign in. |
 | AUTH-02 | A user can log in and log out. After login they land on the page for their role. | M | A student never sees staff or admin pages. |
 | AUTH-03 | Staff accounts are created by an admin and assigned to exactly one department. | M | A staff account without a department cannot be saved. |
 | AUTH-04 | The first admin is created once by the owner (for example with a Laravel seeder or Artisan command), never from a public page. | M | No page or URL in the app can create an admin. |
 | AUTH-05 | Every page and every action checks the user's role on the server. | M | Opening a staff URL while logged in as a student is refused or redirected away, and the same action sent directly (without the page) is refused too. |
 | AUTH-06 | A guest can take a ticket without an account. | C | Deferred past the MVP. TODO(you): decide in 00. If yes, a guest ticket is tied to the device and cannot be listed by others. |
+| AUTH-07 | Admins never set or view user passwords. If local password sign-in is enabled, credentials are hashed and issued/reset through a separate secure flow; if an external provider is enabled, the application does not collect that provider's password. | M | No password or authentication secret appears in admin forms, activity logs, or application responses. |
+| AUTH-08 | Authentication is isolated behind a provider adapter so a university identity provider can be integrated without changing queue roles or ticket ownership. | S | Each enabled adapter is tested against that institution's documented protocol and maps a stable external subject to one local user. No universal compatibility is promised. |
 
 ### Tickets (TKT)
 
@@ -89,6 +92,8 @@ Student, Staff (one department), Admin, Public screen (no login). See [00](00-pr
 | ADM-04 | Admin can read feedback, filtered by department. | S | Deferred past the MVP. |
 | ADM-05 | Admin sees basic stats: tickets served today, average wait, average service time, average rating. | S | Numbers come from recorded timestamps. Deferred past the MVP. |
 | ADM-06 | Removing a department, service or user means deactivating it, so history is kept. | M | Old tickets still show the original names. |
+| ADM-07 | Admin provisions and manages student accounts; staff account management remains restricted to staff roles and department assignment. | M | Student ID and email are unique; role changes are validated server-side and audited. |
+| ADM-08 | Admin can read a searchable activity log of successful account, catalog, and ticket-changing transactions. | M | Each entry identifies actor (or system), action, target, time, and department where applicable. Log entries cannot be edited or deleted through the app; passwords, tokens and sensitive field values are never recorded. |
 
 ### Feedback (FBK)
 
@@ -104,7 +109,7 @@ Student, Staff (one department), Admin, Public screen (no login). See [00](00-pr
 | NFR-02 | Accessibility: text contrast of at least 4.5:1, keyboard operable, visible focus, labels on every input, status changes announced to screen readers. | M |
 | NFR-03 | Every screen that shows data handles loading, empty, error, offline and slow states. | M |
 | NFR-04 | Laravel application on a relational SQL database (MySQL by default, MariaDB if that is what the university's host provides). Schema changes are made with Laravel migrations. | M |
-| NFR-05 | Passwords are stored only as hashes (Laravel's hashing) and are never logged or handled in plain text. | M |
+| NFR-05 | Local passwords are stored only as hashes, transmitted only over HTTPS, and never written to logs or audit metadata. External-provider passwords are never collected by this app. | M |
 | NFR-06 | User-supplied text is never inserted with `innerHTML` and never output unescaped in Blade views. | M |
 | NFR-07 | Works on current Chrome, Edge, Firefox and Safari. | M |
 | NFR-08 | Collect the minimum personal data (name, student ID, university email, course), and show staff only what the service needs. | M |
@@ -112,6 +117,8 @@ Student, Staff (one department), Admin, Public screen (no login). See [00](00-pr
 | NFR-10 | The version number is visible in the page footer. | S |
 | NFR-11 | All input is validated on the server. Browser-side checks are only a convenience. | M |
 | NFR-12 | The application can be hosted on a server owned and run by the university. | M |
+| NFR-13 | Audit data is append-only through the application and excludes passwords, authentication tokens, and unnecessary personal data. | M |
+| NFR-14 | Queue screens remain usable with periodic refresh if real-time delivery is unavailable. | M |
 
 ## User stories (summary)
 

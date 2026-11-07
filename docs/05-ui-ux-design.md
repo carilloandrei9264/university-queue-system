@@ -2,7 +2,7 @@
 
 | Version | Status | Last updated |
 |---------|--------|--------------|
-| 0.4 | Draft | 2026-11-07 |
+| 0.5 | Draft | 2026-11-08 |
 
 ## Design goals
 
@@ -85,14 +85,14 @@ Enrollment takes a student through several offices, one after another. A student
 1. Log in and land on the console for their department. 2. Set a counter label once. 3. Press **Call next**. 4. Serve. 5. Press **Complete** (or **Skip** if absent). 6. Repeat.
 
 **Admin sets up**
-1. Log in. 2. Add a department with its prefix (opening hours come later). 3. Add services. 4. Create staff accounts and assign departments.
+1. Log in. 2. Add a department with its prefix (opening hours come later). 3. Add services. 4. Create student and staff accounts; assign each staff account to one department. 5. Review the activity log for recent successful changes.
 
 ## Screen inventory
 
 | Screen | Role | Main components | Requirements |
 |--------|------|-----------------|--------------|
 | Landing | Anyone | Title, three buttons (Take a ticket, Staff login, View display) | |
-| Login | Anyone | Sign-in with the university account (a seeded demo login until it is connected), inline errors | AUTH-01, AUTH-02 |
+| Login | Anyone | Sign-in using the configured local demo or university identity provider; inline errors | AUTH-01, AUTH-02, AUTH-07 |
 | Student: choose | Student | Department cards, service list | TKT-01, TKT-07 |
 | Student: ticket | Student | Big ticket code, status badge, people ahead, estimate, Cancel | TKT-04 to TKT-06 |
 | Student: history | Student | List of past tickets | TKT-08 |
@@ -101,9 +101,11 @@ Enrollment takes a student through several offices, one after another. A student
 | Display board | Public | One tile per department: code, counter, next few | DSP-01 to DSP-04 |
 | Admin: catalog | Admin | Tables for departments and services with add and edit forms | ADM-01, ADM-02, ADM-06 |
 | Admin: staff | Admin | Staff table, create form | ADM-03 |
+| Admin: students | Admin | Searchable student table, create/edit/deactivate form; no password controls | ADM-07, AUTH-07 |
+| Admin: activity | Admin | Filterable, read-only chronological business activity log | ADM-08 |
 | Admin: feedback and stats | Admin | Feedback list, stat tiles | ADM-04, ADM-05 |
 
-**MVP screens:** Landing, Login, Student: choose, Student: ticket, Staff console, Display board, Admin: catalog, Admin: staff. After the MVP: Student: history, Student: rate, Admin: feedback and stats.
+**MVP screens:** Landing, Login, Student: choose, Student: ticket, Staff console, Display board, Admin: catalog, Admin: students, Admin: staff, Admin: activity. After the MVP: Student: history, Student: rate, Admin: feedback and stats.
 
 ## Wireframes (low fidelity)
 

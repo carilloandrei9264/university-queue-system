@@ -16,6 +16,8 @@ These documents follow the SDLC phases. They live in the repo and change togethe
 | 09 | [Roadmap](09-roadmap.md) | Planning | What ships in which version? | Update after every release |
 | - | [Decisions (ADRs)](decisions/) | Design | Why did we choose X over Y? | Whenever a big choice is made |
 
+Current decisions: [backend](decisions/ADR-0001-backend-approach.md), [university sign-in direction](decisions/ADR-0002-university-sign-in.md), [accounts and identity adapters](decisions/ADR-0003-account-provisioning-and-identity.md), [polling versus Reverb](decisions/ADR-0004-live-updates.md), and [activity log](decisions/ADR-0005-activity-log.md).
+
 ## How the process works
 
 Use a light, iterative SDLC. Do a short upfront pass, then repeat a small cycle for every version.

@@ -2,7 +2,7 @@
 
 | Version | Status | Last updated |
 |---------|--------|--------------|
-| 0.3 | Draft | 2026-11-07 |
+| 0.4 | Draft | 2026-11-08 |
 
 ## Environments
 
@@ -41,6 +41,9 @@ The university hosts the application on its own server. GitHub is used for sourc
 7. How are backups made and restored, and how often?
 8. Can a staging copy be set up for rehearsals?
 9. Is a scheduled task (cron) or background worker available? Neither is needed for the MVP.
+10. If Reverb is considered after the pilot: are persistent WebSocket processes supported, and can the reverse proxy, firewall, TLS certificate, process manager, and monitoring be configured for them?
+11. What student/staff identity provider and protocol are available (for example OIDC/OAuth 2.0, SAML 2.0, or LDAP), and is there a separate student-information API or supported data export? Do not assume EDI provides authentication.
+12. What audit-log retention and archival period does university policy require?
 
 ## Database setup (once)
 
@@ -48,10 +51,11 @@ The university hosts the application on its own server. GitHub is used for sourc
 2. Put the connection settings in the server's `.env`.
 3. Run the migrations (`php artisan migrate`).
 4. On local or staging only, run `php artisan db:seed` to create the fake demo admin and other demo accounts. The demo seeder refuses to run in production. On a new production database, the server owner runs `php artisan queue-it:create-admin` interactively from the server terminal. It refuses to create another admin; never create an admin from a public page.
-5. Create the pilot department, its services and its staff through the admin screens. Use fake demo data on staging.
-6. Load student records: fake seeded records on local and staging. On production, records supplied by the university are loaded onto the server and never committed to git ([ADR-0002](decisions/ADR-0002-university-sign-in.md)).
+5. Create the pilot department, its services, student accounts and staff accounts through the admin screens. Use fake demo data on staging.
+6. On production, provision student records from an approved university source, or have an admin create them through the app. Real records are loaded on the server and never committed to git. Configure external identity only after IT confirms the protocol and ownership mapping ([ADR-0003](decisions/ADR-0003-account-provisioning-and-identity.md)).
 7. Confirm each row of the [access matrix](04-database-schema.md) with a feature test before go-live.
-8. Set up backups before real data arrives.
+8. Set up backups before real data arrives, including an agreed retention policy for the activity log.
+9. Keep five-second polling enabled. Reverb is optional and should be deployed only after host support and reconnect fallback are tested.
 
 ## Release steps
 

@@ -2,13 +2,13 @@
 
 | Version | Schema version | Status | Last updated |
 |---------|----------------|--------|--------------|
-| 0.3 | 1 | Draft | 2026-11-07 |
+| 0.4 | 2 (proposed) | Draft | 2026-11-08 |
 
 This is the relational data model for a SQL database: MySQL by default, or MariaDB if that is what the university's hosting provides ([ADR-0001](decisions/ADR-0001-backend-approach.md)). One engine is chosen per deployment, and the schema is not designed to switch engines later. Every change is a Laravel migration, a controlled way to apply schema changes in order.
 
 Field names are written in camelCase here. In the migrations, use Laravel's snake_case (`department_id`, `created_at`) and the standard `id`, `created_at` and `updated_at` columns.
 
-**MVP schema.** The first migrations create `departments`, `services`, `users`, `tickets` and `dailyCounters`. Items for deferred features are marked below and are added by later migrations when the feature is built.
+**MVP schema.** The target pilot schema includes `departments`, `services`, `users`, `tickets`, `dailyCounters` and `audit_logs`. The existing first migrations do not yet include the proposed external-identity fields or audit table; add them only through a reviewed follow-up migration. Items for deferred features are marked below and are added by later migrations when the feature is built.
 
 ## Entity relationship diagram
 
@@ -20,6 +20,8 @@ erDiagram
   DEPARTMENTS ||--o{ DAILY_COUNTERS : numbers
   SERVICES ||--o{ TICKETS : "requested for"
   USERS ||--o{ TICKETS : "takes (students)"
+  USERS ||--o{ AUDIT_LOGS : "performs"
+  DEPARTMENTS ||--o{ AUDIT_LOGS : "scopes"
   TICKETS ||--o| FEEDBACK : "rated by"
 ```
 
@@ -49,7 +51,7 @@ erDiagram
 
 ### users
 
-The `password` column holds a hash and is used only by seeded demo accounts until the university sign-in is connected ([ADR-0002](decisions/ADR-0002-university-sign-in.md)). It is never stored or logged in plain text, and may be empty once sign-in is connected.
+The `password` column holds a hash only when the configured authentication mode uses local passwords. Admins provision users but never set or view passwords. An external identity maps to a local user using a provider name and stable provider subject; email alone is not a durable external identity key. See [ADR-0003](decisions/ADR-0003-account-provisioning-and-identity.md).
 
 | Field | Type | Rules |
 |-------|------|-------|
@@ -60,8 +62,12 @@ The `password` column holds a hash and is used only by seeded demo accounts unti
 | idNumber | text | student ID, required for students, unique |
 | course | text | students only, from the university records |
 | departmentId | id | required when role is `staff`, otherwise empty |
+| identityProvider | text | nullable provider key for an external identity |
+| externalSubject | text | nullable stable subject from that provider; unique with identityProvider |
 | isActive | boolean | default true |
 | createdAt | timestamp | |
+
+When external identity is configured, `identityProvider` and `externalSubject` are either both null or both present. Add a unique constraint across the pair; email remains a contact/lookup field, not the external identity key.
 
 ### tickets
 
@@ -109,13 +115,22 @@ Deferred past the MVP. Created by a later migration.
 | comment | text | optional, max 500 characters |
 | createdAt | timestamp | |
 
-### auditLog (could have)
+### audit_logs
 
-Deferred past the MVP.
+Required for the MVP (ADM-08). Insert audit records in the same transaction as the successful business operation they describe. The application provides no update or delete action for audit records.
 
-| Field | Type |
-|-------|------|
-| id, actorId, action, targetType, targetId, createdAt | recorded for admin changes (departments, services, staff) |
+| Field | Type | Rules |
+|-------|------|-------|
+| id | id | primary key |
+| actorId | id | nullable user foreign key; null for an automated/system action |
+| action | text | allow-listed verb such as `student.created`, `ticket.called`, or `service.deactivated` |
+| targetType, targetId | text, id | type and identifier of the changed record |
+| departmentId | id | nullable department context |
+| requestId | text | optional correlation identifier, not a credential |
+| metadata | JSON | allow-listed non-sensitive changes only; never passwords, tokens, session data, or full request bodies |
+| createdAt | timestamp | indexed for chronological filtering |
+
+Use an index on `(createdAt, id)` and useful actor/department/action filters. The retention period and archival policy must be agreed with the university before real data is used.
 
 ## Atomic operations
 
@@ -146,8 +161,9 @@ Enforce this on the server with Laravel policies and department-scoped queries. 
 | feedback | no | create for own completed ticket, read own | no | read all |
 | dailyCounters | no | no | no | no (changed only through ticket creation) |
 | stats | no | no | own department | all |
+| activity log | no | no | no | read only; system inserts |
 
-"Board fields only" means ticket code, status, counter label (once it exists) and department, with no student identity. The public display uses a read-only response that never includes student fields. The `feedback` and `stats` rows apply once those features are built (after the MVP).
+"Board fields only" means ticket code, status, counter label (once it exists) and department, with no student identity. The public display uses a read-only response that never includes student fields. The `feedback` and `stats` rows apply once those features are built (after the MVP). Audit logs are admin-readable; they do not grant admins additional permission to alter ticket or account data.
 
 ## Changes from the old schema
 
@@ -174,3 +190,4 @@ Increase the schema version in this file's header whenever the model changes. Re
 | Schema | App version | Change | Migration |
 |--------|-------------|--------|-----------|
 | 1 | 0.1.0 | Initial model | initial migrations, no existing data |
+| 2 (proposed) | planned | Add external identity mapping and append-only `audit_logs`; admin-provisioned student accounts | New Laravel migration; retain existing local users and leave external identity fields null. Implement only after reviewing the data-migration plan. |
