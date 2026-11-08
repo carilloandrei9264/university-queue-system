@@ -1,30 +1,38 @@
-<section class="panel" aria-labelledby="queue-heading">
-    <div class="panel-heading">
-        <h2 id="queue-heading">Today’s queue</h2>
-        <span class="status-badge">{{ $tickets->where('status', 'waiting')->count() }} waiting</span>
+<section class="panel staff-queue-panel" aria-labelledby="queue-heading">
+    <div class="staff-queue-panel-heading">
+        <div>
+            <p class="staff-queue-kicker">Ticket list</p>
+            <h2 id="queue-heading">Today’s tickets</h2>
+        </div>
+        <div class="staff-queue-counts" aria-label="Queue summary">
+            <span class="status-badge waiting">{{ $tickets->where('status', 'waiting')->count() }} waiting</span>
+            <span class="status-badge serving">{{ $tickets->where('status', 'serving')->count() }} serving</span>
+        </div>
     </div>
     @forelse ($tickets as $ticket)
-        <article class="queue-item {{ $ticket->status === 'serving' ? 'is-serving' : '' }}">
+        <article class="queue-item staff-queue-item {{ $ticket->status === 'serving' ? 'is-serving' : '' }} {{ $ticket->status === 'skipped' ? 'is-skipped' : '' }}">
             <div class="queue-item-main">
-                <p class="ticket-code">{{ $ticket->code }}</p>
-                <span class="queue-service">{{ $ticket->service->name }}</span>
+                <div class="staff-ticket-identity">
+                    <p class="ticket-code">{{ $ticket->code }}</p>
+                    <span class="queue-service">{{ $ticket->service->name }}</span>
+                </div>
                 <span class="status-badge {{ $ticket->status }}">{{ $ticket->status === 'serving' ? 'Now serving' : ucfirst($ticket->status) }}</span>
             </div>
             @if (in_array($ticket->status, ['serving', 'skipped'], true))
-                <div class="queue-actions">
+                <div class="queue-actions staff-queue-actions">
                     @if ($ticket->status === 'serving')
                         <form method="POST" action="{{ route('staff.tickets.complete', $ticket) }}">
                             @csrf
-                            <button type="submit">Complete</button>
+                            <button type="submit" data-loading-text="Completing…">Complete</button>
                         </form>
                         <form method="POST" action="{{ route('staff.tickets.skip', $ticket) }}">
                             @csrf
-                            <button class="secondary" type="submit">Skip</button>
+                            <button class="secondary" type="submit" data-loading-text="Skipping…">Skip</button>
                         </form>
                     @else
                         <form method="POST" action="{{ route('staff.tickets.recall', $ticket) }}">
                             @csrf
-                            <button type="submit">Recall</button>
+                            <button type="submit" data-loading-text="Recalling…">Recall</button>
                         </form>
                     @endif
                 </div>
@@ -32,8 +40,9 @@
         </article>
     @empty
         <div class="empty-state">
-            <h2>Queue is clear</h2>
-            <p>There are no tickets in today’s queue yet.</p>
+            <span class="staff-empty-icon" aria-hidden="true">✓</span>
+            <h2>No active tickets</h2>
+            <p>New tickets for your office will appear here automatically.</p>
         </div>
     @endforelse
 </section>

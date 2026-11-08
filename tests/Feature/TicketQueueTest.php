@@ -297,7 +297,11 @@ class TicketQueueTest extends TestCase
         $this->actingAs($staff)
             ->get(route('staff.dashboard'))
             ->assertOk()
-            ->assertSee($ticket->code);
+            ->assertSee($ticket->code)
+            ->assertSee('Office staff console')
+            ->assertSee('Call next ticket')
+            ->assertSee('staff-profile-menu', false)
+            ->assertSee('Today’s tickets');
 
         $this->actingAs($staff)
             ->post(route('staff.call-next'))

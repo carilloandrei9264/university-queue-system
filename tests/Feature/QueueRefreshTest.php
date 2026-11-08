@@ -68,6 +68,8 @@ class QueueRefreshTest extends TestCase
             ->get(route('staff.queue-status'))
             ->assertOk()
             ->assertSee($admissionTicket->code)
+            ->assertSee('Ticket list')
+            ->assertSee('1 waiting')
             ->assertDontSee($registrarTicket->code);
     }
 
