@@ -6,15 +6,20 @@
 
 This list focuses on the work needed to move the current local MVP toward a safe, useful Admission-office pilot. Do not treat the application as production-ready until the deployment-specific checks below have been completed.
 
+### Priority 1 progress (local validation, 2026-11-08)
+
+The available XAMPP environment reports PHP 8.5.12, Laravel 13.40.0, and MariaDB 10.4.32. On an isolated, temporary MariaDB database, all 54 tests passed, including migration/setup tests and the two real multi-process concurrency tests. Seed-free `migrate:fresh` also completed on that disposable schema. This validates the local MariaDB setup only; the university host and staging environment have not been confirmed.
+
 ## Priority 1: Validate the target database and queue behavior
 
 - [ ] Confirm the university server's supported PHP, Laravel-compatible extensions, and MySQL/MariaDB versions.
 - [ ] Configure a staging environment to match those versions and run migrations and seed-free startup there.
-- [ ] Run the automated suite and review database-specific behavior against that engine; the existing PHPUnit suite uses SQLite.
-- [ ] Exercise simultaneous ticket creation and simultaneous “call next” actions against the target database. Confirm tickets are unique, queue ordering is correct, and no ticket is assigned twice.
-- [ ] Fix any incompatibilities and add regression tests for failures found.
+- [x] Run the automated suite and review database-specific behavior against the available local MariaDB 10.4.32 engine. Use [`phpunit.mariadb.xml`](../phpunit.mariadb.xml) for repeatable testing; the default PHPUnit profile still uses SQLite.
+- [x] Exercise simultaneous ticket creation and simultaneous “call next” actions against local MariaDB. Automated process-level regression tests confirm unique daily numbers, distinct ticket assignments, and queue order.
+- [x] No incompatibilities were found in the local MariaDB run; keep the regression tests and rerun them when the target engine is known.
+- [ ] Repeat migrations, the full test suite, and both concurrency tests against the university's actual staging database before the pilot.
 
-This is the most important technical gate: SQL-backed behavior can differ between SQLite and the database used by the university.
+The host-specific items remain a release gate: SQL behavior and supported versions can differ between this local MariaDB and the database used by the university.
 
 ## Priority 2: Confirm the Admission workflow and operating rules
 

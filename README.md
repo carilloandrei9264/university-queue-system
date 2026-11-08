@@ -72,6 +72,14 @@ vendor/bin/pint --test
 
 The test suite uses SQLite, while deployment uses the institution's selected MySQL/MariaDB version. Passing SQLite tests is not a substitute for validating migrations, behavior, and concurrent ticket operations against the actual deployment database. See the [test plan](docs/06-test-plan.md) and [manual checklist](tests/manual-checklist.md).
 
+For MySQL/MariaDB integration and real multi-process queue concurrency tests, create an empty `university_queue_system_test` database and grant the configured test database user access to that database only. Then run:
+
+```powershell
+vendor/bin/phpunit --configuration phpunit.mariadb.xml
+```
+
+This profile runs `migrate:fresh` through the test suite. Never point it at a database containing application or university data. Set the test connection's host and credentials in `.env`; keep the test database separate from local development and production.
+
 ## Documentation
 
 - [Documentation index](docs/README.md)

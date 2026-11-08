@@ -10,7 +10,7 @@
 |-------|------|-----|------|
 | Unit | Pure logic in `app/Domain/` (ticket code, status transitions, wait estimate) | Laravel's test runner, `tests/Unit` | Every change to `Domain/` |
 | Manual functional | Screens and flows per role | [`tests/manual-checklist.md`](../tests/manual-checklist.md) | Before every release |
-| Concurrency | Two people acting at the same moment | Automated feature tests that send parallel requests to a real MySQL (or MariaDB) test database, the same engine as production, plus two browser windows by hand | Built in v0.3.0, rerun before every release |
+| Concurrency | Two people acting at the same moment | `QueueConcurrencyTest` runs queue operations in separate PHP processes against a disposable MySQL/MariaDB test database, plus two browser windows by hand | Built in v0.3.0, rerun before every release |
 | Accessibility | Keyboard, contrast, screen reader basics | Checklist in 05 plus browser dev tools audit | Before v0.6.0 (MVP screens) and v1.0.0 |
 | Cross-browser | Chrome, Edge, Firefox, Safari | Run the smoke path in each | Before v1.0.0 |
 | Security | Role and department rules | Feature tests that send each forbidden request as each role (see below) | Every version that changes rules |
@@ -56,6 +56,16 @@ Write each case before building the feature. IDs link back to [requirements](02-
 Cases for requirements deferred past the MVP (FBK-01) are written now and run when the feature ships.
 
 If Reverb is introduced after the pilot, add tests for private-channel authorization, broadcasting only after commit, disconnect/reconnect recovery, and successful operation with the polling fallback when the WebSocket server is unavailable.
+
+## MySQL/MariaDB integration tests
+
+The default `php artisan test` suite uses SQLite for speed. For database-specific migrations, locking, and concurrency validation, create a separate empty test database and grant the test connection access only to it. Configure `DB_HOST`, `DB_PORT`, `DB_USERNAME`, and `DB_PASSWORD` in the local `.env`, then run:
+
+```powershell
+vendor/bin/phpunit --configuration phpunit.mariadb.xml
+```
+
+The MariaDB profile targets `university_queue_system_test` and the tests run `migrate:fresh`; this database must contain no data that needs to be preserved. The two concurrency tests are skipped on SQLite because SQLite does not implement the row-locking behavior the queue relies on.
 
 ## Unit tests to write first (`tests/Unit/`)
 

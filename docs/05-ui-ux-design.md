@@ -19,7 +19,7 @@ The interface includes empty states for queues and admin lists, focused validati
 
 Loading feedback is intentionally limited to in-progress form submissions and queue refreshes; server-rendered page navigation does not show a skeleton because page content arrives with the initial response.
 
-The admin overview now links directly to the existing office, service, staff, student, and activity-log pages. The admin header groups the signed-in user's name and role in an accessible profile menu with sign-out inside the menu. Activity filters keep the action selector beside the search field and its Filter/Clear controls, with a stacked layout on narrow screens. The sign-in page uses a responsive branded panel beside the form. No unimplemented queue metrics or controls have been added.
+The admin overview now links directly to the existing office, service, staff, student, and activity-log pages. The admin header groups the signed-in user's name and role in an accessible profile menu with sign-out inside the menu. Activity filters keep the action selector beside the search field and its Filter/Clear controls, with a stacked layout on narrow screens. The sign-in page uses a responsive branded panel beside the form and the supplied campus photo at `public/images/campus-login.webp`. No unimplemented queue metrics or controls have been added.
 
 Admin catalog and account pages use collapsed create forms, searchable lists, and compact expandable records instead of rendering a full edit form for every item. Lists are paginated (15 records per page) to keep long directories manageable. The admin header stays visible while scrolling. The centered content width is retained while gaps within the admin content are reduced.
 
