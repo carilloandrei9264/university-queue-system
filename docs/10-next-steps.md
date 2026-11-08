@@ -6,16 +6,18 @@
 
 This list focuses on the work needed to move the current local MVP toward a safe, useful Admission-office pilot. Do not treat the application as production-ready until the deployment-specific checks below have been completed.
 
-### Priority 1 progress (local validation, 2026-11-08)
+### Validation progress (local environments, 2026-11-08)
 
-The available XAMPP environment reports PHP 8.5.12, Laravel 13.40.0, and MariaDB 10.4.32. On an isolated, temporary MariaDB database, all 54 tests passed, including migration/setup tests and the two real multi-process concurrency tests. Seed-free `migrate:fresh` also completed on that disposable schema. This validates the local MariaDB setup only; the university host and staging environment have not been confirmed.
+The available XAMPP environment reports PHP 8.5.12, Laravel 13.40.0, and MariaDB 10.4.32. On the isolated MariaDB test database, all 59 tests passed, including migration/setup and both real multi-process concurrency tests. The SQLite suite passed 57 tests and skipped the two MariaDB-only concurrency tests. Seed-free `migrate:fresh` also completed on the disposable MariaDB schema. This validates local environments only; the university host and staging environment have not been confirmed.
+
+The confirmed multi-window workflow is implemented: admins configure 1–20 windows per office and assign staff, each window can serve one ticket at a time, the display and student ticket show the serving window, and staff can take a break after completing or skipping the active ticket. Shrinking a window count or changing a staff assignment is blocked while a ticket is serving or remains recallable.
 
 ## Priority 1: Validate the target database and queue behavior
 
 - [ ] Confirm the university server's supported PHP, Laravel-compatible extensions, and MySQL/MariaDB versions.
 - [ ] Configure a staging environment to match those versions and run migrations and seed-free startup there.
 - [x] Run the automated suite and review database-specific behavior against the available local MariaDB 10.4.32 engine. Use [`phpunit.mariadb.xml`](../phpunit.mariadb.xml) for repeatable testing; the default PHPUnit profile still uses SQLite.
-- [x] Exercise simultaneous ticket creation and simultaneous “call next” actions against local MariaDB. Automated process-level regression tests confirm unique daily numbers, distinct ticket assignments, and queue order.
+- [x] Exercise simultaneous ticket creation and simultaneous “call next” actions against local MariaDB. Automated process-level regression tests confirm unique daily numbers, distinct ticket assignments across windows, and oldest-first queue assignment.
 - [x] No incompatibilities were found in the local MariaDB run; keep the regression tests and rerun them when the target engine is known.
 - [ ] Repeat migrations, the full test suite, and both concurrency tests against the university's actual staging database before the pilot.
 
@@ -26,7 +28,7 @@ The host-specific items remain a release gate: SQL behavior and supported versio
 - [ ] Ask Admission staff to confirm the services offered, operating hours, ticket naming, and who can call or manage each queue.
 - [ ] Walk through the student and staff workflows with representative users; record confusing steps and accessibility issues.
 - [ ] Confirm how staff will receive accounts and temporary passwords, and how lost access will be handled.
-- [ ] Review the [manual test checklist](../tests/manual-checklist.md) against the current screens and queue workflow; update obsolete or missing checks before using it as a release gate.
+- [x] Update the [manual test checklist](../tests/manual-checklist.md) for the current multi-window, break, and completion flows.
 
 ## Priority 3: Agree on hosting, security, and operations
 

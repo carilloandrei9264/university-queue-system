@@ -143,16 +143,88 @@ class TicketQueueTest extends TestCase
         $second = $queue->createTicket($this->student('student002@example.com'), $admission->id);
         $otherOffice = $queue->createTicket($this->student('student003@example.com'), $registrar->id);
         $staff = User::where('email', 'admission.staff@example.com')->firstOrFail();
+        $secondWindow = $staff->department->windows()->where('position', 2)->firstOrFail();
+        $secondStaff = User::create([
+            'full_name' => 'Second Admission Staff',
+            'email' => 'second.admission.staff@example.com',
+            'password' => 'temporary-password',
+            'role' => 'staff',
+            'department_id' => $staff->department_id,
+            'is_active' => true,
+        ]);
+        $secondWindow->update(['staff_id' => $secondStaff->id]);
 
         $called = $queue->callNext($staff);
 
         $this->assertSame($first->id, $called?->id);
         $this->assertSame('serving', $called?->status);
         $this->assertSame($staff->id, $called?->handled_by);
+        $this->assertSame($staff->serviceWindow->id, $called?->service_window_id);
         $this->assertSame('waiting', $second->fresh()->status);
         $this->assertSame('waiting', $otherOffice->fresh()->status);
-        $this->assertSame($second->id, $queue->callNext($staff)?->id);
-        $this->assertNull($queue->callNext($staff));
+        $this->expectException(ValidationException::class);
+        $queue->callNext($staff);
+    }
+
+    public function test_staff_at_another_window_can_serve_the_next_ticket_simultaneously(): void
+    {
+        $queue = app(TicketQueueService::class);
+        $service = $this->serviceFor('AMS');
+        $first = $queue->createTicket($this->student('student001@example.com'), $service->id);
+        $second = $queue->createTicket($this->student('student002@example.com'), $service->id);
+        $firstStaff = User::where('email', 'admission.staff@example.com')->firstOrFail();
+        $secondWindow = $firstStaff->department->windows()->where('position', 2)->firstOrFail();
+        $secondStaff = User::create([
+            'full_name' => 'Second Admission Staff',
+            'email' => 'second.admission.staff@example.com',
+            'password' => 'temporary-password',
+            'role' => 'staff',
+            'department_id' => $firstStaff->department_id,
+            'is_active' => true,
+        ]);
+        $secondWindow->update(['staff_id' => $secondStaff->id]);
+
+        $firstCall = $queue->callNext($firstStaff);
+        $secondCall = $queue->callNext($secondStaff);
+
+        $this->assertSame($first->id, $firstCall?->id);
+        $this->assertSame($second->id, $secondCall?->id);
+        $this->assertNotSame($firstCall?->service_window_id, $secondCall?->service_window_id);
+        $this->assertSame(2, Ticket::where('status', 'serving')->count());
+    }
+
+    public function test_window_break_requires_no_serving_ticket_and_blocks_calls_until_return(): void
+    {
+        $queue = app(TicketQueueService::class);
+        $service = $this->serviceFor('AMS');
+        $staff = User::where('email', 'admission.staff@example.com')->firstOrFail();
+        $ticket = $queue->createTicket($this->student('student001@example.com'), $service->id);
+        $queue->callNext($staff);
+
+        try {
+            $queue->setWindowBreak($staff, true);
+            $this->fail('A staff member cannot start a break with a ticket in service.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('window', $exception->errors());
+        }
+
+        $queue->completeTicket($staff, $ticket->id);
+        $window = $queue->setWindowBreak($staff, true);
+        $this->assertTrue($window->is_on_break);
+
+        try {
+            $queue->callNext($staff);
+            $this->fail('A staff member on break cannot call the next ticket.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('window', $exception->errors());
+        }
+
+        $window = $queue->setWindowBreak($staff, false);
+        $this->assertFalse($window->is_on_break);
+        $this->assertSame(2, DB::table('audit_logs')->whereIn('action', [
+            'window.break_started',
+            'window.break_ended',
+        ])->count());
     }
 
     public function test_students_can_cancel_only_their_own_waiting_tickets(): void

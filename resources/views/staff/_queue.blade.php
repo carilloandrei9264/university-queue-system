@@ -15,12 +15,13 @@
                 <div class="staff-ticket-identity">
                     <p class="ticket-code">{{ $ticket->code }}</p>
                     <span class="queue-service">{{ $ticket->service->name }}</span>
+                    <span class="queue-window">{{ $ticket->serviceWindow?->name ?? 'Window not assigned' }}</span>
                 </div>
                 <span class="status-badge {{ $ticket->status }}">{{ $ticket->status === 'serving' ? 'Now serving' : ucfirst($ticket->status) }}</span>
             </div>
             @if (in_array($ticket->status, ['serving', 'skipped'], true))
                 <div class="queue-actions staff-queue-actions">
-                    @if ($ticket->status === 'serving')
+                    @if ((int) $ticket->handled_by === (int) auth()->id() && $ticket->status === 'serving')
                         <form method="POST" action="{{ route('staff.tickets.complete', $ticket) }}">
                             @csrf
                             <button type="submit" data-loading-text="Completing…">Complete</button>
@@ -29,11 +30,13 @@
                             @csrf
                             <button class="secondary" type="submit" data-loading-text="Skipping…">Skip</button>
                         </form>
-                    @else
+                    @elseif ((int) $ticket->handled_by === (int) auth()->id())
                         <form method="POST" action="{{ route('staff.tickets.recall', $ticket) }}">
                             @csrf
                             <button type="submit" data-loading-text="Recalling…">Recall</button>
                         </form>
+                    @else
+                        <span class="staff-ticket-owner">Handled at {{ $ticket->serviceWindow?->name ?? 'another window' }}</span>
                     @endif
                 </div>
             @endif

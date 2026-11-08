@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Department;
+use App\Models\ServiceWindow;
 use App\Models\Service;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Services\TicketQueueService;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -39,10 +41,12 @@ class AdminSetupTest extends TestCase
         $this->post(route('admin.departments.store'), [
             'name' => 'Library',
             'prefix' => 'LIB',
+            'window_count' => 2,
             'is_active' => 1,
         ])->assertRedirect(route('admin.departments.index'));
 
         $department = Department::where('prefix', 'LIB')->firstOrFail();
+        $this->assertSame(2, $department->windows()->where('is_active', true)->count());
 
         $this->post(route('admin.services.store'), [
             'department_id' => $department->id,
@@ -54,6 +58,7 @@ class AdminSetupTest extends TestCase
             'full_name' => 'Library Staff',
             'email' => 'LIBRARY.STAFF@example.com',
             'department_id' => $department->id,
+            'window_id' => $department->windows()->where('position', 1)->value('id'),
             'is_active' => 1,
         ])->assertRedirect(route('admin.staff.index'))
             ->assertSessionHas('temporary_password', fn (mixed $password): bool => is_string($password) && strlen($password) === 24);
@@ -113,6 +118,7 @@ class AdminSetupTest extends TestCase
             'full_name' => 'Updated Staff',
             'email' => $staff->email,
             'department_id' => $department->id,
+            'window_id' => $staff->serviceWindow->id,
             'is_active' => 0,
         ])->assertRedirect(route('admin.staff.index'));
 
@@ -166,11 +172,87 @@ class AdminSetupTest extends TestCase
                 'full_name' => 'Unassigned Staff',
                 'email' => 'unassigned@example.com',
                 'department_id' => $inactiveDepartment->id,
+                'window_id' => ServiceWindow::where('department_id', Department::where('prefix', 'AMS')->value('id'))->firstOrFail()->id,
                 'is_active' => 1,
             ])
             ->assertSessionHasErrors('department_id');
 
         $this->assertDatabaseMissing('users', ['email' => 'unassigned@example.com']);
+    }
+
+    public function test_admin_cannot_assign_an_occupied_window_or_remove_a_window_serving_a_ticket(): void
+    {
+        $department = Department::where('prefix', 'AMS')->firstOrFail();
+        $firstStaff = User::where('email', 'admission.staff@example.com')->firstOrFail();
+        $secondWindow = $department->windows()->where('position', 2)->firstOrFail();
+
+        $this->post(route('admin.staff.store'), [
+            'full_name' => 'Second Admission Staff',
+            'email' => 'second.admission.staff@example.com',
+            'department_id' => $department->id,
+            'window_id' => $secondWindow->id,
+            'is_active' => 1,
+        ])->assertRedirect(route('admin.staff.index'));
+        $secondStaff = User::where('email', 'second.admission.staff@example.com')->firstOrFail();
+
+        $this->from(route('admin.staff.index'))
+            ->post(route('admin.staff.store'), [
+                'full_name' => 'Third Admission Staff',
+                'email' => 'third.admission.staff@example.com',
+                'department_id' => $department->id,
+                'window_id' => $secondWindow->id,
+                'is_active' => 1,
+            ])
+            ->assertSessionHasErrors('window_id');
+
+        $ticket = app(TicketQueueService::class)
+            ->createTicket(User::where('email', 'student001@example.com')->firstOrFail(), Service::where('department_id', $department->id)->value('id'));
+        app(TicketQueueService::class)->callNext($secondStaff);
+
+        $this->patch(route('admin.departments.update', $department), [
+            'name' => $department->name,
+            'prefix' => $department->prefix,
+            'window_count' => 1,
+            'is_active' => 1,
+        ])->assertStatus(422);
+        $this->assertTrue($secondWindow->fresh()->is_active);
+
+        app(TicketQueueService::class)->completeTicket($secondStaff, $ticket->id);
+        $skippedTicket = app(TicketQueueService::class)->createTicket(
+            User::where('email', 'student001@example.com')->firstOrFail(),
+            Service::where('department_id', $department->id)->value('id'),
+        );
+        app(TicketQueueService::class)->callNext($secondStaff);
+        app(TicketQueueService::class)->skipTicket($secondStaff, $skippedTicket->id);
+
+        $this->patch(route('admin.staff.update', $secondStaff), [
+            'full_name' => $secondStaff->full_name,
+            'email' => $secondStaff->email,
+            'department_id' => $department->id,
+            'window_id' => $secondWindow->id,
+            'is_active' => 0,
+        ])->assertSessionHasErrors('is_active');
+        $this->patch(route('admin.departments.update', $department), [
+            'name' => $department->name,
+            'prefix' => $department->prefix,
+            'window_count' => 1,
+            'is_active' => 1,
+        ])->assertStatus(422);
+
+        app(TicketQueueService::class)->recallTicket($secondStaff, $skippedTicket->id);
+        app(TicketQueueService::class)->completeTicket($secondStaff, $skippedTicket->id);
+        $this->patch(route('admin.departments.update', $department), [
+            'name' => $department->name,
+            'prefix' => $department->prefix,
+            'window_count' => 1,
+            'is_active' => 1,
+        ])->assertRedirect(route('admin.departments.index'));
+
+        $this->assertFalse($secondWindow->fresh()->is_active);
+        $this->assertNull($secondWindow->fresh()->staff_id);
+        $this->assertNull($secondStaff->fresh()->serviceWindow);
+        $this->assertSame(1, $department->windows()->where('is_active', true)->count());
+        $this->assertSame($firstStaff->id, $department->windows()->where('position', 1)->value('staff_id'));
     }
 
     public function test_service_cannot_be_moved_to_another_department_after_tickets_exist(): void
@@ -235,6 +317,7 @@ class AdminSetupTest extends TestCase
             'full_name' => 'Attempted Admin',
             'email' => 'attempted.admin@example.com',
             'department_id' => Department::firstOrFail()->id,
+            'window_id' => Department::firstOrFail()->windows()->where('position', 2)->value('id'),
             'is_active' => 1,
             'role' => 'admin',
         ])->assertRedirect(route('admin.staff.index'));
@@ -245,6 +328,7 @@ class AdminSetupTest extends TestCase
             'full_name' => $admin->full_name,
             'email' => $admin->email,
             'department_id' => Department::firstOrFail()->id,
+            'window_id' => Department::firstOrFail()->windows()->where('is_active', true)->value('id'),
             'is_active' => 1,
         ])->assertNotFound();
 

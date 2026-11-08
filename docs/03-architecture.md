@@ -23,7 +23,7 @@ app/
     Controllers/           thin: receive the request, call a service, return a view
     Requests/              form requests: server-side validation
     Middleware/
-  Models/                  User, Department, Service, Ticket, DailyCounter
+  Models/                  User, Department, Service, ServiceWindow, Ticket, DailyCounter
   Policies/                who may do what (role and department)
   Services/                actions that change data in one transaction: create ticket, call next, complete
 config/                    app settings, Asia/Manila timezone
@@ -63,12 +63,12 @@ Each action is a service method called by a controller after validation and auth
 | Auth | Authenticate through the enabled local or external provider adapter; logout (AUTH-01, AUTH-02, AUTH-08) |
 | Catalog | List departments and services. Admin creates and edits them (ADM-01, ADM-02) |
 | Tickets | `createTicket(student, service)`, `cancelTicket(ticket)` |
-| Staff | `callNext(staff)`, `completeTicket(ticket)`, `skipTicket(ticket)`, `recallTicket(ticket)`. `setPaused` is after the MVP |
+| Staff | `callNext(staff)`, `completeTicket(ticket)`, `skipTicket(ticket)`, `recallTicket(ticket)`, `setWindowBreak(staff, isOnBreak)` |
 | Status and display | Read-only queries for the student's own ticket, one department's queue, and the public board (board fields only) |
 | Admin | `createStudent(...)`, `createStaff(...)`, `setUserActive(...)`, read activity log |
 | Deferred | Feedback, statistics, real-time WebSocket delivery |
 
-`createTicket` and `callNext` must be atomic (see [04](04-database-schema.md)). Staff actions take the department from the logged-in user, never from the request.
+`createTicket` and `callNext` must be atomic (see [04](04-database-schema.md)). Staff actions take the department and active service window from the logged-in user, never from the request. Each configured window serves at most one active ticket; staff on different windows can call the next oldest waiting tickets independently. A staff member must complete or skip the current ticket before starting a break, and can call again after returning.
 
 ## Ticket status model
 

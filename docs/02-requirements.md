@@ -16,8 +16,8 @@ The first release for real users is a pilot that starts with **Admission (AMS)**
 |---|----------|--------------|-------------|
 | 1 | Admin setup for one department, its services, student and staff accounts | ADM-01, ADM-02, ADM-03, ADM-06, ADM-07, AUTH-03, AUTH-04, AUTH-07 | One department at first; admins provision accounts and assign roles. |
 | 2 | Student sign-in, ticket creation, ticket status viewing | AUTH-01, AUTH-02, AUTH-07, TKT-01, TKT-05, TKT-06 | Accounts are provisioned by an admin. University identity integration is added through a provider adapter when the institution's protocol is known. Status and people ahead refresh periodically. |
-| 3 | Staff limited to their assigned department, call next and complete | AUTH-05, STF-01, STF-02, STF-03, STF-04 | Department checks are enforced on the server. Staff can also skip a no-show and recall it. |
-| 4 | Public display of the ticket being served | DSP-01, DSP-02 | No student identity. Periodic refresh. |
+| 3 | Staff limited to their assigned department and service window; multiple windows serve simultaneously | AUTH-05, STF-01, STF-02, STF-03, STF-04, STF-05, STF-06 | Admin configures 1–20 windows per office and assigns staff. A window handles one ticket at a time; staff complete or skip it before taking a break. |
+| 4 | Public display shows each window's serving ticket, readiness, or break state | DSP-01, DSP-02 | No student identity. Periodic refresh. |
 | 5 | Correct numbering and protection against simultaneous requests | TKT-02, TKT-03, TKT-04, STF-02 | Daily numbers per department, one active ticket per student, no duplicate numbers, no ticket called twice. Covered by concurrency tests. |
 | 6 | Admin activity log | ADM-08 | Successful account, catalog, and ticket-changing transactions are auditable without recording passwords, tokens, or unnecessary personal data. |
 
@@ -25,7 +25,7 @@ Also in the MVP: NFR-01 to NFR-09, NFR-11 to NFR-14.
 
 **Deferred past the MVP:** guest tickets (AUTH-06), priority tickets (STF-07), feedback (FBK-01, ADM-04), statistics (ADM-05), multi-campus support, complex opening-hours rules (TKT-07), and WebSocket delivery using Reverb. Until then, screens use simple periodic refresh. University SSO integration depends on the identity protocol the institution provides; it is not assumed to be available for the first pilot. The pilot uses admin-provisioned local accounts with generated temporary passwords; local password sign-in must be explicitly enabled in the deployment environment, while seeded demo accounts remain blocked in production.
 
-**Not listed either way** (treated as after the MVP unless you decide otherwise): ticket history (TKT-08), the estimated wait part of TKT-05, counter label (STF-05), pause queue (STF-06), next tickets on the display (DSP-03) and sound (DSP-04).
+**Not listed either way** (treated as after the MVP unless you decide otherwise): ticket history (TKT-08), the estimated wait part of TKT-05, pause the entire department queue (STF-06; per-window break is included), next tickets on the display (DSP-03) and sound (DSP-04).
 
 **Added to the MVP:** cancel a ticket (TKT-06) and skip with recall (STF-04). Enrollment takes a student through several offices, and TKT-04 allows only one active ticket, so a student must be able to leave a queue and staff must be able to move past a no-show.
 
@@ -41,7 +41,7 @@ Student, Staff (one department), Admin, Public screen (no login). See [00](00-pr
 |----|-------------|-----|---------------------|
 | AUTH-01 | Students do not self-register. An admin provisions their account, or an approved university identity integration matches them to an existing account. | M | Student ID and email are unique; only active, provisioned students can sign in. |
 | AUTH-02 | A user can log in and log out. After login they land on the page for their role. | M | A student never sees staff or admin pages. |
-| AUTH-03 | Staff accounts are created by an admin and assigned to exactly one department. | M | A staff account without a department cannot be saved. |
+| AUTH-03 | Staff accounts are created by an admin and assigned to exactly one department and at most one service window. | M | Queue-operating staff must have a window assigned within their department; a window cannot be assigned to multiple staff members. |
 | AUTH-04 | The first admin is created once by the owner (for example with a Laravel seeder or Artisan command), never from a public page. | M | No page or URL in the app can create an admin. |
 | AUTH-05 | Every page and every action checks the user's role on the server. | M | Opening a staff URL while logged in as a student is refused or redirected away, and the same action sent directly (without the page) is refused too. |
 | AUTH-06 | A guest can take a ticket without an account. | C | Deferred past the MVP. TODO(you): decide in 00. If yes, a guest ticket is tied to the device and cannot be listed by others. |
@@ -66,11 +66,11 @@ Student, Staff (one department), Admin, Public screen (no login). See [00](00-pr
 | ID | Requirement | Pri | Acceptance criteria |
 |----|-------------|-----|---------------------|
 | STF-01 | Staff see only their own department's queue. | M | No control or data from another department is reachable. The queue list refreshes automatically every 5 to 10 seconds without reloading the staff page. |
-| STF-02 | Staff can call the next waiting ticket in their department (oldest first). | M | Two staff calling at once never receive the same ticket. |
+| STF-02 | Staff can call the next waiting ticket in their department (oldest first) at their assigned window. | M | Each window can have one serving ticket; staff at distinct windows can serve tickets simultaneously and never receive the same ticket. |
 | STF-03 | Staff can mark the serving ticket as completed. | M | Completion time is recorded. |
 | STF-04 | Staff can skip a no-show and recall a skipped ticket. | S | A skipped ticket can be recalled until the day ends. |
-| STF-05 | Staff set a counter label (for example "Window 2") shown to students and on the display. | S | The label appears next to the serving ticket. |
-| STF-06 | Staff can pause the queue (for example, lunch break). | S | Students see "Queue paused". |
+| STF-05 | Admin configures 1–20 named service windows per department and assigns each staff member to one window. | M | The student's called ticket and public display show the window that owns the ticket. |
+| STF-06 | Staff can put their assigned window on break and return it to service. | M | A break is rejected while a ticket is serving; complete or skip first. The break affects only that window, not other windows in the department. |
 | STF-07 | Priority tickets (seniors, PWD, pregnant) are called before normal ones. | C | Deferred past the MVP. TODO(you): decide in 00. |
 
 ### Public display (DSP)

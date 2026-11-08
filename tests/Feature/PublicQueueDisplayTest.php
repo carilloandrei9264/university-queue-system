@@ -58,6 +58,9 @@ class PublicQueueDisplayTest extends TestCase
             ->assertOk()
             ->assertSee($department->name)
             ->assertSee($serving->code)
+            ->assertSee('Window 1')
+            ->assertSee('Window 2')
+            ->assertSee('Ready')
             ->assertSee($next->code)
             ->assertSee('content="5"', false)
             ->assertDontSee($student->full_name)
@@ -66,6 +69,24 @@ class PublicQueueDisplayTest extends TestCase
             ->assertDontSee($nextStudent->full_name)
             ->assertDontSee($nextStudent->email)
             ->assertDontSee($nextStudent->student_id);
+    }
+
+    public function test_display_shows_each_window_break_state_and_next_waiting_ticket(): void
+    {
+        $department = Department::where('prefix', 'AMS')->firstOrFail();
+        $staff = User::where('email', 'admission.staff@example.com')->firstOrFail();
+        $ticket = app(TicketQueueService::class)
+            ->createTicket(User::where('email', 'student001@example.com')->firstOrFail(), Service::where('department_id', $department->id)->value('id'));
+
+        app(TicketQueueService::class)->setWindowBreak($staff, true);
+
+        $this->get(route('display.show', $department->prefix))
+            ->assertOk()
+            ->assertSee('Window 1')
+            ->assertSee('On break')
+            ->assertSee('Window 2')
+            ->assertSee('Ready')
+            ->assertSee($ticket->code);
     }
 
     public function test_display_does_not_show_tickets_from_another_department_or_queue_date(): void

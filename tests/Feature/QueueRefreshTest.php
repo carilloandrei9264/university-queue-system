@@ -53,7 +53,7 @@ class QueueRefreshTest extends TestCase
             ->get(route('student.queue-status'))
             ->assertOk()
             ->assertSee('Now serving')
-            ->assertSee('Please proceed to the Admission counter.')
+            ->assertSee('Please proceed to Window 1.')
             ->assertDontSee('Cancel this ticket');
     }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
+use App\Models\ServiceWindow;
 use App\Models\Ticket;
 use App\Services\TicketQueueService;
 use Illuminate\Http\RedirectResponse;
@@ -25,13 +26,21 @@ class QueueController extends Controller
     private function queueData(Request $request): array
     {
         $queueDate = Carbon::now(config('app.timezone'))->toDateString();
+        $staff = $request->user();
+        $window = ServiceWindow::query()
+            ->where('staff_id', $staff->id)
+            ->where('is_active', true)
+            ->with(['servingTicket' => fn ($query) => $query->where('queue_date', $queueDate)])
+            ->first();
 
         return [
+            'window' => $window,
+            'currentTicket' => $window?->servingTicket,
             'tickets' => Ticket::query()
-                ->where('department_id', $request->user()->department_id)
+                ->where('department_id', $staff->department_id)
                 ->where('queue_date', $queueDate)
                 ->whereIn('status', ['waiting', 'serving', 'skipped'])
-                ->with(['department', 'service'])
+                ->with(['department', 'service', 'serviceWindow'])
                 ->orderBy('number')
                 ->get(),
         ];
@@ -42,7 +51,21 @@ class QueueController extends Controller
         $ticket = $queue->callNext($request->user());
 
         return redirect()->route('staff.dashboard')
-            ->with('status', $ticket === null ? 'There are no waiting tickets.' : "Now serving {$ticket->code}.");
+            ->with('status', $ticket === null ? 'There are no waiting tickets.' : "Now serving {$ticket->code} at {$ticket->serviceWindow->name}.");
+    }
+
+    public function startBreak(Request $request, TicketQueueService $queue): RedirectResponse
+    {
+        $window = $queue->setWindowBreak($request->user(), true);
+
+        return redirect()->route('staff.dashboard')->with('status', "{$window->name} is now on break.");
+    }
+
+    public function endBreak(Request $request, TicketQueueService $queue): RedirectResponse
+    {
+        $window = $queue->setWindowBreak($request->user(), false);
+
+        return redirect()->route('staff.dashboard')->with('status', "{$window->name} is back in service.");
     }
 
     public function complete(Request $request, Ticket $ticket, TicketQueueService $queue): RedirectResponse

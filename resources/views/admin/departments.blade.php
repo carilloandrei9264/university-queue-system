@@ -15,6 +15,10 @@
                 <label for="new-prefix">Ticket prefix (2–4 uppercase letters)</label>
                 <input id="new-prefix" name="prefix" type="text" minlength="2" maxlength="4" pattern="[A-Z]{2,4}" value="{{ old('prefix') }}" required>
             </div>
+            <div>
+                <label for="new-window-count">Number of service windows</label>
+                <input id="new-window-count" name="window_count" type="number" min="1" max="20" value="{{ old('window_count', 3) }}" required>
+            </div>
             <input name="is_active" type="hidden" value="1">
             <button type="submit">Add department</button>
         </form>
@@ -40,7 +44,7 @@
                 <details class="admin-record">
                     <summary class="admin-record-summary">
                         <span class="admin-record-name">{{ $department->name }} <span class="prefix">{{ $department->prefix }}</span></span>
-                        <span class="admin-record-meta">{{ $department->services_count }} services · {{ $department->staff_count }} staff · {{ $department->is_active ? 'Active' : 'Inactive' }}</span>
+                        <span class="admin-record-meta">{{ $department->services_count }} services · {{ $department->staff_count }} staff · {{ $department->active_windows_count }} windows · {{ $department->is_active ? 'Active' : 'Inactive' }}</span>
                         <span class="summary-action">Edit</span>
                     </summary>
                     <form class="admin-form-grid" method="POST" action="{{ route('admin.departments.update', $department) }}">
@@ -53,6 +57,10 @@
                         <div>
                             <label for="prefix-{{ $department->id }}">Prefix</label>
                             <input id="prefix-{{ $department->id }}" name="prefix" type="text" value="{{ $department->prefix }}" minlength="2" maxlength="4" pattern="[A-Z]{2,4}" required>
+                        </div>
+                        <div>
+                            <label for="windows-{{ $department->id }}">Number of service windows</label>
+                            <input id="windows-{{ $department->id }}" name="window_count" type="number" min="1" max="20" value="{{ $department->active_windows_count }}" required>
                         </div>
                         <input name="is_active" type="hidden" value="0">
                         <label class="inline">

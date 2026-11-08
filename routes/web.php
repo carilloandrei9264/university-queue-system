@@ -50,6 +50,8 @@ Route::middleware(['auth', EnsurePasswordChange::class])->group(function (): voi
         Route::get('/dashboard', [QueueController::class, 'index'])->name('dashboard');
         Route::get('/queue-status', [QueueController::class, 'refresh'])->name('queue-status');
         Route::post('/call-next', [QueueController::class, 'callNext'])->name('call-next');
+        Route::post('/window/break', [QueueController::class, 'startBreak'])->name('window.break');
+        Route::post('/window/return', [QueueController::class, 'endBreak'])->name('window.return');
         Route::post('/tickets/{ticket}/complete', [QueueController::class, 'complete'])
             ->name('tickets.complete');
         Route::post('/tickets/{ticket}/skip', [QueueController::class, 'skip'])->name('tickets.skip');

@@ -7,16 +7,19 @@ Version: ____  Date: ____  Browser/device: ____
 ## Smoke path (every release)
 - [ ] Landing page loads, no console errors
 - [ ] Sign in as a seeded student, log out, sign in again
-- [ ] Take a ticket, see people ahead and estimate
+- [ ] Take a ticket and see its status and number of people ahead
 - [ ] Finish or cancel it, then take a ticket at another office
 - [ ] Staff calls the ticket, student screen updates on its own after the refresh interval, without reloading
-- [ ] Staff completes, student sees the rating prompt
+- [ ] Assign staff to two windows, call two tickets, and confirm the student and display show the correct window for each
+- [ ] Complete or skip the active ticket before starting a window break; confirm other windows remain available and the display shows the break
+- [ ] Staff completes the ticket; the student can join another service queue
 - [ ] Display board shows the call
 - [ ] Admin can add a department and a service
 
 ## Roles and access
 - [ ] Student cannot open staff or admin pages
 - [ ] Staff cannot see another department's tickets
+- [ ] Staff cannot call another ticket at their active window or manage another window's ticket
 - [ ] Logged-out user is redirected from every protected page
 - [ ] Display board works without logging in
 

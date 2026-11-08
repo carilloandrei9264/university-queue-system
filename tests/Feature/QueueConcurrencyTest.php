@@ -10,6 +10,7 @@ use App\Services\TicketQueueService;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Concurrency;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class QueueConcurrencyTest extends TestCase
@@ -75,7 +76,18 @@ class QueueConcurrencyTest extends TestCase
         $secondStudent = User::where('email', 'student002@example.com')->firstOrFail();
         $firstTicket = $queue->createTicket($firstStudent, $service->id);
         $secondTicket = $queue->createTicket($secondStudent, $service->id);
-        $staffId = User::where('email', 'admission.staff@example.com')->value('id');
+        $staff = User::where('email', 'admission.staff@example.com')->firstOrFail();
+        $secondStaff = User::create([
+            'full_name' => 'Second Admission Staff',
+            'email' => 'second.admission.staff@example.com',
+            'password' => 'temporary-password',
+            'role' => 'staff',
+            'department_id' => $staff->department_id,
+            'is_active' => true,
+        ]);
+        $staff->department->windows()->where('position', 2)->update(['staff_id' => $secondStaff->id]);
+        $staffId = $staff->id;
+        $secondStaffId = $secondStaff->id;
 
         $calledIds = Concurrency::run([
             static function () use ($staffId): ?int {
@@ -83,14 +95,34 @@ class QueueConcurrencyTest extends TestCase
                     ->callNext(User::query()->findOrFail($staffId))
                     ?->id;
             },
-            static function () use ($staffId): ?int {
+            static function () use ($secondStaffId): ?int {
                 return app(TicketQueueService::class)
-                    ->callNext(User::query()->findOrFail($staffId))
+                    ->callNext(User::query()->findOrFail($secondStaffId))
                     ?->id;
             },
         ], timeout: 30);
 
-        $this->assertSame([$firstTicket->id, $secondTicket->id], array_values($calledIds));
+        $calledIdsInOrder = array_values($calledIds);
+        sort($calledIdsInOrder);
+        $expectedTicketIds = [$firstTicket->id, $secondTicket->id];
+        sort($expectedTicketIds);
+        $this->assertSame($expectedTicketIds, $calledIdsInOrder);
+        $this->assertSame(
+            [$firstTicket->id, $secondTicket->id],
+            DB::table('audit_logs')
+                ->where('action', 'ticket.called')
+                ->orderBy('id')
+                ->pluck('target_id')
+                ->map(static fn ($id): int => (int) $id)
+                ->all(),
+        );
+        $this->assertSame(
+            2,
+            Ticket::query()
+                ->whereIn('id', [$firstTicket->id, $secondTicket->id])
+                ->distinct('service_window_id')
+                ->count('service_window_id'),
+        );
         $this->assertSame(2, Ticket::query()->where('status', 'serving')->count());
         $this->assertSame(2, $this->activityCount('ticket.called'));
     }

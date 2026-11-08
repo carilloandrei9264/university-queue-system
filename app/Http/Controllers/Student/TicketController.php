@@ -28,7 +28,7 @@ class TicketController extends Controller
         $activeTicket = Ticket::query()
             ->where('student_id', $request->user()->id)
             ->whereIn('status', ['waiting', 'serving'])
-            ->with(['department', 'service'])
+            ->with(['department', 'service', 'serviceWindow'])
             ->first();
 
         return [

@@ -6,6 +6,7 @@ use App\Domain\TicketStatus;
 use App\Models\DailyCounter;
 use App\Models\Department;
 use App\Models\Service;
+use App\Models\ServiceWindow;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -92,6 +93,7 @@ class TicketQueueService
         return DB::transaction(function () use ($staff): ?Ticket {
             $lockedStaff = User::query()->whereKey($staff->getKey())->lockForUpdate()->firstOrFail();
             $this->ensureStaffCanQueue($lockedStaff);
+            $window = $this->assignedWindow($lockedStaff);
 
             $department = Department::query()
                 ->whereKey($lockedStaff->department_id)
@@ -103,6 +105,18 @@ class TicketQueueService
             }
 
             $queueDate = Carbon::now(config('app.timezone'))->toDateString();
+
+            if ($window->is_on_break) {
+                throw ValidationException::withMessages([
+                    'window' => 'Return from break before calling the next ticket.',
+                ]);
+            }
+
+            if ($this->windowHasServingTicket($window, $queueDate)) {
+                throw ValidationException::withMessages([
+                    'window' => 'Complete or skip the ticket at your window before calling another.',
+                ]);
+            }
 
             $ticket = Ticket::query()
                 ->where('department_id', $department->id)
@@ -119,10 +133,11 @@ class TicketQueueService
             $this->transition($ticket, TicketStatus::Serving);
             $ticket->called_at = now();
             $ticket->handled_by = $lockedStaff->id;
+            $ticket->service_window_id = $window->id;
             $ticket->save();
             $this->activityLogger->record($lockedStaff, 'ticket.called', 'ticket', $ticket->id, $department->id);
 
-            return $ticket->fresh(['department', 'service', 'student']);
+            return $ticket->fresh(['department', 'service', 'student', 'serviceWindow']);
         }, attempts: 3);
     }
 
@@ -162,13 +177,20 @@ class TicketQueueService
         return DB::transaction(function () use ($staff, $ticketId): Ticket {
             $lockedStaff = User::query()->whereKey($staff->getKey())->lockForUpdate()->firstOrFail();
             $this->ensureStaffCanQueue($lockedStaff);
+            $window = $this->assignedWindow($lockedStaff);
 
             $ticket = Ticket::query()->whereKey($ticketId)->lockForUpdate()->firstOrFail();
-            $this->ensureTicketBelongsToStaff($ticket, $lockedStaff);
+            $this->ensureTicketBelongsToStaff($ticket, $lockedStaff, $window);
 
             if ($ticket->queue_date->toDateString() !== Carbon::now(config('app.timezone'))->toDateString()) {
                 throw ValidationException::withMessages([
                     'ticket' => 'Only a skipped ticket from today can be recalled.',
+                ]);
+            }
+
+            if ($window->is_on_break || $this->windowHasServingTicket($window, Carbon::now(config('app.timezone'))->toDateString())) {
+                throw ValidationException::withMessages([
+                    'ticket' => 'Return to an available window before recalling a ticket.',
                 ]);
             }
 
@@ -179,7 +201,36 @@ class TicketQueueService
             $ticket->save();
             $this->activityLogger->record($lockedStaff, 'ticket.recalled', 'ticket', $ticket->id, $ticket->department_id);
 
-            return $ticket->fresh(['department', 'service', 'student']);
+            return $ticket->fresh(['department', 'service', 'student', 'serviceWindow']);
+        }, attempts: 3);
+    }
+
+    public function setWindowBreak(User $staff, bool $isOnBreak): ServiceWindow
+    {
+        return DB::transaction(function () use ($staff, $isOnBreak): ServiceWindow {
+            $lockedStaff = User::query()->whereKey($staff->getKey())->lockForUpdate()->firstOrFail();
+            $this->ensureStaffCanQueue($lockedStaff);
+            $window = $this->assignedWindow($lockedStaff);
+            $queueDate = Carbon::now(config('app.timezone'))->toDateString();
+
+            if ($this->windowHasServingTicket($window, $queueDate)) {
+                throw ValidationException::withMessages([
+                    'window' => 'Complete or skip the current ticket before going on break.',
+                ]);
+            }
+
+            if ($window->is_on_break !== $isOnBreak) {
+                $window->update(['is_on_break' => $isOnBreak]);
+                $this->activityLogger->record(
+                    $lockedStaff,
+                    $isOnBreak ? 'window.break_started' : 'window.break_ended',
+                    'service_window',
+                    $window->id,
+                    $window->department_id,
+                );
+            }
+
+            return $window->fresh(['department']);
         }, attempts: 3);
     }
 
@@ -198,9 +249,10 @@ class TicketQueueService
         return DB::transaction(function () use ($staff, $ticketId, $nextStatus): Ticket {
             $lockedStaff = User::query()->whereKey($staff->getKey())->lockForUpdate()->firstOrFail();
             $this->ensureStaffCanQueue($lockedStaff);
+            $window = $this->assignedWindow($lockedStaff);
 
             $ticket = Ticket::query()->whereKey($ticketId)->lockForUpdate()->firstOrFail();
-            $this->ensureTicketBelongsToStaff($ticket, $lockedStaff);
+            $this->ensureTicketBelongsToStaff($ticket, $lockedStaff, $window);
             $this->transition($ticket, $nextStatus);
 
             $ticket->completed_at = now();
@@ -209,7 +261,7 @@ class TicketQueueService
             $action = $nextStatus === TicketStatus::Completed ? 'ticket.completed' : 'ticket.skipped';
             $this->activityLogger->record($lockedStaff, $action, 'ticket', $ticket->id, $ticket->department_id);
 
-            return $ticket->fresh(['department', 'service', 'student']);
+            return $ticket->fresh(['department', 'service', 'student', 'serviceWindow']);
         }, attempts: 3);
     }
 
@@ -227,11 +279,36 @@ class TicketQueueService
         }
     }
 
-    private function ensureTicketBelongsToStaff(Ticket $ticket, User $staff): void
+    private function ensureTicketBelongsToStaff(Ticket $ticket, User $staff, ServiceWindow $window): void
     {
-        if ((int) $ticket->department_id !== (int) $staff->department_id) {
-            throw new AuthorizationException('You can only manage tickets in your assigned office.');
+        if ((int) $ticket->department_id !== (int) $staff->department_id ||
+            (int) $ticket->service_window_id !== (int) $window->id ||
+            (int) $ticket->handled_by !== (int) $staff->id) {
+            throw new AuthorizationException('You can only manage tickets currently assigned to your service window.');
         }
+    }
+
+    private function assignedWindow(User $staff): ServiceWindow
+    {
+        $window = ServiceWindow::query()
+            ->where('staff_id', $staff->id)
+            ->lockForUpdate()
+            ->first();
+
+        if ($window === null || ! $window->is_active || (int) $window->department_id !== (int) $staff->department_id) {
+            throw new AuthorizationException('An active service window assignment is required to operate the queue.');
+        }
+
+        return $window;
+    }
+
+    private function windowHasServingTicket(ServiceWindow $window, string $queueDate): bool
+    {
+        return Ticket::query()
+            ->where('service_window_id', $window->id)
+            ->where('queue_date', $queueDate)
+            ->where('status', TicketStatus::Serving->value)
+            ->exists();
     }
 
     private function transition(Ticket $ticket, TicketStatus $nextStatus): void

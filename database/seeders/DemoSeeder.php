@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Department;
+use App\Models\ServiceWindow;
 use App\Models\Service;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -48,6 +49,12 @@ class DemoSeeder extends Seeder
                 ['prefix' => $office['prefix']],
                 ['name' => $office['name'], 'is_active' => true],
             );
+            foreach (range(1, 3) as $position) {
+                ServiceWindow::firstOrCreate(
+                    ['department_id' => $department->id, 'position' => $position],
+                    ['name' => "Window {$position}", 'is_active' => true],
+                );
+            }
 
             foreach ($office['services'] as $serviceName) {
                 Service::updateOrCreate(
@@ -56,7 +63,7 @@ class DemoSeeder extends Seeder
                 );
             }
 
-            User::updateOrCreate(
+            $staff = User::updateOrCreate(
                 ['email' => $office['staff'][1]],
                 [
                     'full_name' => $office['staff'][0],
@@ -68,6 +75,10 @@ class DemoSeeder extends Seeder
                     'email_verified_at' => now(),
                 ],
             );
+            ServiceWindow::query()
+                ->where('department_id', $department->id)
+                ->where('position', 1)
+                ->update(['staff_id' => $staff->id]);
         }
 
         User::updateOrCreate(

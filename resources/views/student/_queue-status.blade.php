@@ -31,7 +31,7 @@
                         <li class="is-complete"><span aria-hidden="true">✓</span><strong>Waiting</strong></li>
                         <li class="is-current" aria-current="step"><span>2</span><strong>Called to counter</strong></li>
                     </ol>
-                    <p class="notice student-turn-notice"><strong>Please proceed to the {{ $activeTicket->department->name }} counter.</strong><span>Have your ticket number ready.</span></p>
+                    <p class="notice student-turn-notice"><strong>Please proceed to {{ $activeTicket->serviceWindow?->name ?? $activeTicket->department->name.' counter' }}.</strong><span>{{ $activeTicket->department->name }} office · Have your ticket number ready.</span></p>
                 @endif
                 @if ($activeTicket->status === 'waiting')
                     <form class="ticket-actions" method="POST" action="{{ route('student.tickets.destroy', $activeTicket) }}">

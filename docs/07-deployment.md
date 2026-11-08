@@ -67,7 +67,7 @@ The university hosts the application on its own server. GitHub is used for sourc
 4. Merge to `main`. Tag: `git tag -a v0.3.0 -m "v0.3.0"` and `git push origin v0.3.0`.
 5. Create a GitHub Release from the tag, pasting the changelog section.
 6. Back up the production database.
-7. Deploy the tagged version to the server, install dependencies (`composer install --no-dev`), run `php artisan migrate --force`, and refresh Laravel's caches (`php artisan optimize`). Use maintenance mode (`php artisan down` and `php artisan up`) when a release changes the schema. The exact deployment method depends on the answers to the hosting questions.
+7. Deploy the tagged version to the server and install dependencies (`composer install --no-dev`). Before applying the service-window migration, let staff complete or skip all tickets currently being served that day; the migration refuses to proceed while any remain. Then use maintenance mode (`php artisan down`), run `php artisan migrate --force`, refresh Laravel's caches (`php artisan optimize`), and return to service (`php artisan up`). The exact deployment method depends on the answers to the hosting questions.
 8. Open the live site, confirm the footer shows the new version, and run the smoke path.
 
 ## Rollback

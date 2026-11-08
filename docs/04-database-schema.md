@@ -2,21 +2,24 @@
 
 | Version | Schema version | Status | Last updated |
 |---------|----------------|--------|--------------|
-| 0.4 | 3 | Draft | 2026-11-08 |
+| 0.5 | 4 | Draft | 2026-11-08 |
 
 This is the relational data model for a SQL database: MySQL by default, or MariaDB if that is what the university's hosting provides ([ADR-0001](decisions/ADR-0001-backend-approach.md)). One engine is chosen per deployment, and the schema is not designed to switch engines later. Every change is a Laravel migration, a controlled way to apply schema changes in order.
 
 Field names are written in camelCase here. In the migrations, use Laravel's snake_case (`department_id`, `created_at`) and the standard `id`, `created_at` and `updated_at` columns.
 
-**MVP schema.** The pilot schema includes `departments`, `services`, `users`, `tickets`, `dailyCounters` and `audit_logs`. Admin-managed student and staff accounts use the `users` table. External-identity fields remain future work; items for deferred features are marked below and are added by later migrations when the feature is built.
+**MVP schema.** The pilot schema includes `departments`, `services`, `service_windows`, `users`, `tickets`, `dailyCounters` and `audit_logs`. Admin-managed student and staff accounts use the `users` table. External-identity fields remain future work; items for deferred features are marked below and are added by later migrations when the feature is built.
 
 ## Entity relationship diagram
 
 ```mermaid
 erDiagram
   DEPARTMENTS ||--o{ SERVICES : offers
+  DEPARTMENTS ||--o{ SERVICE_WINDOWS : operates
   DEPARTMENTS ||--o{ USERS : "staff belong to"
   DEPARTMENTS ||--o{ TICKETS : receives
+  SERVICE_WINDOWS o|--o| USERS : "assigned staff"
+  SERVICE_WINDOWS ||--o{ TICKETS : serves
   DEPARTMENTS ||--o{ DAILY_COUNTERS : numbers
   SERVICES ||--o{ TICKETS : "requested for"
   USERS ||--o{ TICKETS : "takes (students)"
@@ -48,6 +51,20 @@ erDiagram
 | name | text | required, unique within the department |
 | isActive | boolean | default true |
 | defaultMinutes | integer | fallback estimate when there is no history (default 5). After the MVP. |
+
+### service_windows
+
+Each department has 1–20 configurable service windows. An active staff account is assigned to one active window in its department; a unique `staff_id` prevents assigning a window to multiple staff members (and each staff member to multiple windows). Deactivated windows retain their history and can be reactivated by increasing the department's configured window count.
+
+| Field | Type | Rules |
+|-------|------|-------|
+| id | id | primary key |
+| departmentId | id | foreign key to departments, required |
+| staffId | id | nullable, unique foreign key to users |
+| name | text | required, unique within department (for example `Window 1`) |
+| position | integer | required, unique within department, 1–20 |
+| isActive | boolean | default true |
+| isOnBreak | boolean | default false; a window cannot call tickets while on break |
 
 ### users
 
@@ -91,6 +108,7 @@ When external identity is configured, `identityProvider` and `externalSubject` a
 | completedAt | timestamp | when `completed` or `skipped` |
 | cancelledAt | timestamp | set when a ticket is cancelled (TKT-06) |
 | handledBy | id | staff user who called it |
+| serviceWindowId | id | nullable foreign key to the window serving it; retained for ticket history |
 
 Constraints:
 - Unique (departmentId, queueDate, number).
@@ -140,7 +158,8 @@ These must happen in one indivisible step: a database transaction with row locks
 
 1. **Create ticket:** lock the student's `users` row and check they have no `waiting` or `serving` ticket (TKT-04). Make sure the day's counter row exists (its unique key prevents two copies), lock it, add 1, write the counter, and write the ticket with that number. The MVP also checks that the department is active. Open-hours and pause checks come later (TKT-07, STF-06).
 2. **Call next:** find and lock the oldest `waiting` ticket in the staff member's department (priority first once STF-07 exists), set it to `serving` with `calledAt` (and the counter label once STF-05 exists). Two staff pressing at once must get different tickets, and a ticket that is already `serving` is never called again.
-3. **Cancel, complete, skip, recall:** lock the ticket, check the current status, then change it. The MVP uses cancel, complete, skip and recall.
+   Each staff member locks their assigned window and cannot call again while it has a serving ticket or is on break. Different windows can serve different tickets simultaneously. Ticket ownership is bound to the calling staff member and window for complete, skip, and recall actions.
+3. **Cancel, complete, skip, recall, and window break:** lock the relevant student, ticket, or assigned window, check ownership and current state, then change it. A window can enter break only after its current ticket is completed or skipped; it can call again after returning.
 
 Derived numbers (not stored):
 - **People ahead** = waiting tickets in the same department and day with a smaller number.
@@ -194,3 +213,4 @@ Increase the schema version in this file's header whenever the model changes. Re
 | 1 | 0.1.0 | Initial model | initial migrations, no existing data |
 | 2 | 0.4.0 | Add temporary password state and append-only `audit_logs` | `2026_11_08_000005_add_temporary_passwords_and_audit_logs.php`; existing users retain password state default values. |
 | 3 | 0.4.0 | Mark seeded demo accounts to prevent production sign-in | `2026_11_08_000006_add_demo_account_marker.php`; known demo accounts are marked, all other existing accounts default to non-demo. |
+| 4 | 0.5.0 | Add configurable service windows, staff assignments, per-window ticket ownership, and break state | `2026_11_08_000007_create_service_windows_table.php`; existing departments receive three windows, waiting and historical tickets retain a null window until called, and migration is refused while today's tickets are being served. |

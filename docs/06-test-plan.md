@@ -37,14 +37,18 @@ Write each case before building the feature. IDs link back to [requirements](02-
 | T-TKT-05 | TKT-05 | Staff calls the student's ticket | Student screen updates by itself within one refresh interval, without reloading |
 | T-TKT-06 | TKT-06 | Cancel while waiting, then try to cancel while serving | First works, second refused |
 | T-STF-01 | STF-01 | Staff opens console | Only own department's tickets visible |
-| T-STF-02 | STF-02 | Two staff of the same department press Call next together | Two different tickets, none called twice |
+| T-STF-02 | STF-02 | Two staff of the same department on distinct windows call next | Two different tickets are served at the same time; neither window owns more than one active ticket |
+| T-STF-02a | AUTH-03, STF-05 | Admin assigns two staff to the same window, or changes an assignment while a ticket is serving | Conflicting assignment and unsafe reassignment are rejected |
 | T-STF-03 | STF-03 | Complete the serving ticket | Status `completed`, `completedAt` set |
 | T-STF-04 | STF-04 | Skip, then recall | Ticket returns to serving |
+| T-STF-06 | STF-06 | Attempt a break while serving, then complete/skip, go on break and return | Break is first refused; after the ticket ends the window shows on break, cannot call, and resumes calling after return |
+| T-STF-05 | STF-05 | Increase/decrease an office's active window count | 1–20 windows are configured; a serving or recallable ticket prevents removing its window; removed windows release their staff assignment |
 | T-DSP-01 | DSP-01 | Open the public display while tickets exist | No student name, ID number or email appears in the page or in its refresh response |
-| T-DSP-02 | DSP-02 | Call a ticket with the display open | Display updates by itself within one refresh interval |
+| T-DSP-02 | DSP-02 | Call a ticket, place a window on break, and keep the display open | Display updates the correct window's ticket, ready, and break state within one refresh interval |
 | T-ADM-06 | ADM-06 | Deactivate a department that has old tickets | Old tickets still show the department name |
 | T-ADM-08 | ADM-08 | Create/update/deactivate accounts and catalog records; create, call, complete, cancel, skip and recall tickets; inspect the admin log | Each successful mutation is recorded once with actor/action/target/time; no password, token or unnecessary personal values appear; refresh polling does not create entries |
 | T-ADM-08b | ADM-08 | Attempt to edit or delete an audit entry through an application route | No mutation route exists; entries remain unchanged |
+| T-MIG-01 | Schema migration | Apply the service-window migration while a ticket is serving today | Migration is refused before changing the schema; complete or skip the ticket, then retry |
 | T-FBK-01 | FBK-01 | Rate a completed ticket twice | Second rejected |
 | T-NFR-03a | NFR-03 | Turn off the network on each data screen | Offline banner, last data marked stale |
 | T-NFR-03b | NFR-03 | Throttle to slow 3G | "Still loading" message after 4 seconds |

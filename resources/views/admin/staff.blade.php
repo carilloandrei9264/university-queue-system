@@ -33,6 +33,20 @@
                     @endforeach
                 </select>
             </div>
+            <div>
+                <label for="new-staff-window">Assigned service window</label>
+                <select id="new-staff-window" name="window_id" required>
+                    <option value="">Choose a window</option>
+                    @foreach ($departments as $department)
+                        <optgroup label="{{ $department->name }}">
+                            @foreach ($department->windows as $window)
+                                <option value="{{ $window->id }}" @disabled($window->staff_id !== null) @selected(old('window_id') == $window->id)>{{ $window->name }}{{ $window->staff ? ' — assigned' : '' }}</option>
+                            @endforeach
+                        </optgroup>
+                    @endforeach
+                </select>
+                <span class="muted">Only one active staff member can be assigned to each window.</span>
+            </div>
             <input name="is_active" type="hidden" value="1">
             <button type="submit">Add staff account</button>
         </form>
@@ -58,7 +72,7 @@
                 <details class="admin-record">
                     <summary class="admin-record-summary">
                         <span class="admin-record-name">{{ $staff->full_name }}</span>
-                        <span class="admin-record-meta">{{ $staff->email }} · {{ $staff->department?->name ?? 'No department' }} · {{ $staff->is_active ? 'Active' : 'Inactive' }}</span>
+                        <span class="admin-record-meta">{{ $staff->email }} · {{ $staff->department?->name ?? 'No department' }} · {{ $staff->serviceWindow?->name ?? 'No window assigned' }} · {{ $staff->is_active ? 'Active' : 'Inactive' }}</span>
                         <span class="summary-action">Edit</span>
                     </summary>
                     <form class="admin-form-grid" method="POST" action="{{ route('admin.staff.update', $staff) }}">
@@ -77,6 +91,19 @@
                             <select id="department-{{ $staff->id }}" name="department_id" required>
                                 @foreach ($departments as $department)
                                     <option value="{{ $department->id }}" @selected($department->id === $staff->department_id)>{{ $department->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label for="window-{{ $staff->id }}">Assigned service window</label>
+                            <select id="window-{{ $staff->id }}" name="window_id" required>
+                                <option value="">Choose a window</option>
+                                @foreach ($departments as $department)
+                                    <optgroup label="{{ $department->name }}">
+                                        @foreach ($department->windows as $window)
+                                            <option value="{{ $window->id }}" @disabled($window->staff_id !== null && $window->staff_id !== $staff->id) @selected($window->id === $staff->serviceWindow?->id)>{{ $window->name }}{{ $window->staff && $window->staff_id !== $staff->id ? ' — assigned' : '' }}</option>
+                                        @endforeach
+                                    </optgroup>
                                 @endforeach
                             </select>
                         </div>

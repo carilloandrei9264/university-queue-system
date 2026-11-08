@@ -16,12 +16,12 @@
                     <span class="profile-avatar" aria-hidden="true">{{ strtoupper(mb_substr(auth()->user()->full_name, 0, 1)) }}</span>
                     <span class="profile-copy">
                         <strong>{{ auth()->user()->full_name }}</strong>
-                        <span>Office staff · {{ auth()->user()->department->name }}</span>
+                        <span>Office staff · {{ $window?->name ?? 'No window assigned' }}</span>
                     </span>
                     <span class="profile-chevron" aria-hidden="true"></span>
                 </summary>
                 <div class="profile-dropdown">
-                    <p>{{ auth()->user()->department->name }} office<br><strong>{{ auth()->user()->full_name }}</strong></p>
+                    <p>{{ auth()->user()->department->name }} · {{ $window?->name ?? 'No window assigned' }}<br><strong>{{ auth()->user()->full_name }}</strong></p>
                     <form method="POST" action="{{ route('logout') }}" data-logout-form>
                         @csrf
                         <button class="profile-logout" type="submit" data-loading-text="Signing out…">Sign out</button>
@@ -37,10 +37,29 @@
                 <h1 id="staff-welcome-heading">{{ auth()->user()->department->name }} queue</h1>
                 <p>Call and manage today’s tickets for your office.</p>
             </div>
-            <form class="call-next-form" method="POST" action="{{ route('staff.call-next') }}">
-                @csrf
-                <button class="gold" type="submit" data-loading-text="Calling next…">Call next ticket <span aria-hidden="true">→</span></button>
-            </form>
+            @if ($window)
+                @if ($window->is_on_break)
+                    <form class="call-next-form" method="POST" action="{{ route('staff.window.return') }}">
+                        @csrf
+                        <button class="gold" type="submit" data-loading-text="Returning…">Return from break</button>
+                    </form>
+                @elseif ($currentTicket)
+                    <button class="gold" type="button" disabled title="Complete or skip the current ticket first">Finish current ticket first</button>
+                @else
+                    <div class="staff-window-actions">
+                        <form class="call-next-form" method="POST" action="{{ route('staff.call-next') }}">
+                            @csrf
+                            <button class="gold" type="submit" data-loading-text="Calling next…">Call next ticket <span aria-hidden="true">→</span></button>
+                        </form>
+                        <form class="staff-break-form" method="POST" action="{{ route('staff.window.break') }}">
+                            @csrf
+                            <button class="secondary" type="submit" data-loading-text="Starting break…">On break</button>
+                        </form>
+                    </div>
+                @endif
+            @else
+                <p class="staff-unassigned-note">Ask your administrator to assign you to a service window.</p>
+            @endif
         </section>
 
         <div class="staff-queue-heading">
@@ -53,6 +72,16 @@
 
         @if (session('status'))
             <p class="status success-state staff-feedback" data-state="success" role="status">{{ session('status') }}</p>
+        @endif
+        @if ($errors->any())
+            <section class="error validation-summary staff-feedback" role="alert" tabindex="-1" data-validation-summary>
+                <p>We couldn’t complete that action:</p>
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </section>
         @endif
 
         <p class="staff-refresh state-message" data-refresh-state data-state="ready" role="status" aria-live="polite">

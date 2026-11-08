@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'completed_at',
     'cancelled_at',
     'handled_by',
+    'service_window_id',
 ])]
 class Ticket extends Model
 {
@@ -53,5 +54,10 @@ class Ticket extends Model
     public function handler(): BelongsTo
     {
         return $this->belongsTo(User::class, 'handled_by');
+    }
+
+    public function serviceWindow(): BelongsTo
+    {
+        return $this->belongsTo(ServiceWindow::class);
     }
 }

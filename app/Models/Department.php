@@ -38,4 +38,9 @@ class Department extends Model
     {
         return $this->hasMany(DailyCounter::class);
     }
+
+    public function windows(): HasMany
+    {
+        return $this->hasMany(ServiceWindow::class)->orderBy('position');
+    }
 }
