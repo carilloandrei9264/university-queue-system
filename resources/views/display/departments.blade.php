@@ -10,7 +10,7 @@
 <body class="display-page">
     <header class="app-header">
         <div class="header-inner">
-            <a class="brand" href="{{ route('display.index') }}">NU QUEUE-IT</a>
+            <a class="brand" href="{{ route('display.index') }}"><img class="brand-icon" src="{{ asset('images/nu-bulldog-icon.webp') }}" alt=""> NU QUEUE-IT</a>
             <span class="header-meta">Public queue displays</span>
         </div>
     </header>

@@ -9,7 +9,7 @@
 <body>
     <header class="app-header">
         <div class="header-inner student-header-inner">
-            <a class="brand" href="{{ route('student.dashboard') }}">NU QUEUE-IT</a>
+            <a class="brand" href="{{ route('student.dashboard') }}"><img class="brand-icon" src="{{ asset('images/nu-bulldog-icon.webp') }}" alt=""> NU QUEUE-IT</a>
             <span class="student-header-label">Student portal</span>
             <details class="profile-menu student-profile-menu">
                 <summary class="profile-trigger">

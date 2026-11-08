@@ -9,7 +9,7 @@
 <body>
     <header class="app-header">
         <div class="header-inner staff-header-inner">
-            <a class="brand" href="{{ route('staff.dashboard') }}">NU QUEUE-IT</a>
+            <a class="brand" href="{{ route('staff.dashboard') }}"><img class="brand-icon" src="{{ asset('images/nu-bulldog-icon.webp') }}" alt=""> NU QUEUE-IT</a>
             <span class="staff-header-label">{{ auth()->user()->department->name }} office</span>
             <details class="profile-menu staff-profile-menu">
                 <summary class="profile-trigger">

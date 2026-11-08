@@ -11,7 +11,7 @@
 <body class="display-page">
     <header class="app-header">
         <div class="header-inner display-header-inner">
-            <a class="brand" href="{{ route('display.index') }}">NU QUEUE-IT</a>
+            <a class="brand" href="{{ route('display.index') }}"><img class="brand-icon" src="{{ asset('images/nu-bulldog-icon.webp') }}" alt=""> NU QUEUE-IT</a>
             <h1 class="display-title">{{ $department->name }} queue</h1>
             <a class="header-meta" href="{{ route('display.index') }}">All offices</a>
         </div>

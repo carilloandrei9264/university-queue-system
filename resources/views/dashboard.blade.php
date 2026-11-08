@@ -9,7 +9,7 @@
 <body>
     <header class="app-header">
         <div class="header-inner">
-            <a class="brand" href="{{ route('admin.dashboard') }}">NU QUEUE-IT</a>
+            <a class="brand" href="{{ route('admin.dashboard') }}"><img class="brand-icon" src="{{ asset('images/nu-bulldog-icon.webp') }}" alt=""> NU QUEUE-IT</a>
             @include('admin._profile-menu')
         </div>
     </header>

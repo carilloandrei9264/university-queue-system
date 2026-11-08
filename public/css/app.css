@@ -105,13 +105,18 @@ p { margin-top: 0.5rem; }
 }
 
 .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
     color: #fff;
     font-size: 1.05rem;
     font-weight: 800;
     letter-spacing: 0.035em;
     text-decoration: none;
+    white-space: nowrap;
 }
 
+.brand-icon { display: block; width: 2.6rem; height: 2.6rem; flex: 0 0 auto; object-fit: contain; }
 .brand:hover { color: #fff; }
 .header-meta { color: rgb(255 255 255 / 82%); font-size: 0.9rem; }
 .header-inner form { margin: 0; }
@@ -829,6 +834,7 @@ th { background: #f4f7fb; color: #354052; font-size: 0.85rem; }
 .display-page .app-header { border-color: var(--gold-500); background: rgb(0 0 0 / 12%); }
 .display-header-inner { min-height: 5rem; }
 .display-page .brand { font-size: clamp(1rem, 2vw, 1.3rem); }
+.display-page .brand-icon { width: 3.25rem; height: 3.25rem; }
 .display-title { margin: 0; color: #fff; font-size: clamp(1.3rem, 3vw, 2rem); text-align: right; }
 .display-shell { display: grid; width: min(100% - 2rem, 96rem); gap: 1.25rem; grid-template-columns: minmax(0, 1.55fr) minmax(17rem, 0.8fr); margin: clamp(1.25rem, 5vh, 3.5rem) auto 1rem; }
 .display-multiwindow-shell { align-items: stretch; grid-template-columns: minmax(0, 1fr) minmax(17rem, 0.58fr); }
@@ -905,7 +911,9 @@ th { background: #f4f7fb; color: #354052; font-size: 0.85rem; }
 @media (max-width: 36rem) {
     .header-inner { width: calc(100% - 1.25rem); min-height: 3.8rem; }
     .header-inner { gap: 0.5rem; }
-    .brand { font-size: 0.92rem; }
+    .brand { gap: 0.35rem; font-size: 0.92rem; }
+    .brand-icon { width: 2.1rem; height: 2.1rem; }
+    .display-page .brand-icon { width: 2.4rem; height: 2.4rem; }
     .profile-trigger { gap: 0.45rem; padding-right: 0.55rem; }
     .profile-copy strong { max-width: 6rem; font-size: 0.8rem; }
     .profile-copy > span { display: none; }
