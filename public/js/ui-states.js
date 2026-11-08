@@ -41,66 +41,68 @@ if (!navigator.onLine) {
 window.addEventListener('offline', showConnectionState);
 window.addEventListener('online', clearConnectionState);
 
-document.querySelectorAll('form').forEach((form) => {
+document.addEventListener('submit', (event) => {
+    const form = event.target;
+
+    if (!(form instanceof HTMLFormElement)) {
+        return;
+    }
+
     if (form.method.toUpperCase() === 'GET') {
-        form.addEventListener('submit', (event) => {
-            if (!navigator.onLine) {
-                event.preventDefault();
-                setFormProgress(form, 'Your device is offline. Reconnect, then submit this form again.', 'offline');
-            }
-        });
+        if (!navigator.onLine) {
+            event.preventDefault();
+            setFormProgress(form, 'Your device is offline. Reconnect, then submit this form again.', 'offline');
+        }
 
         return;
     }
 
-    form.addEventListener('submit', (event) => {
-        if (form.dataset.submitting === 'true') {
-            event.preventDefault();
+    if (form.dataset.submitting === 'true') {
+        event.preventDefault();
 
-            return;
-        }
+        return;
+    }
 
-        if (!navigator.onLine) {
-            event.preventDefault();
-            setFormProgress(form, 'Your device is offline. Reconnect, then submit this form again.', 'offline');
+    if (!navigator.onLine) {
+        event.preventDefault();
+        setFormProgress(form, 'Your device is offline. Reconnect, then submit this form again.', 'offline');
 
-            return;
-        }
+        return;
+    }
 
-        const submitter = event.submitter instanceof HTMLButtonElement
-            ? event.submitter
-            : form.querySelector('button[type="submit"], button:not([type])');
+    const submitter = event.submitter instanceof HTMLButtonElement
+        ? event.submitter
+        : form.querySelector('button[type="submit"], button:not([type])');
 
-        form.dataset.submitting = 'true';
-        form.setAttribute('aria-busy', 'true');
+    form.dataset.submitting = 'true';
+    form.setAttribute('aria-busy', 'true');
 
-        if (submitter) {
-            submitter.dataset.originalLabel = submitter.textContent;
-            submitter.dataset.wasDisabled = String(submitter.disabled);
-            submitter.textContent = submitter.dataset.loadingText || 'Submitting…';
-            submitter.classList.add('is-submitting');
-            submitter.setAttribute('aria-busy', 'true');
-            submitter.setAttribute('aria-live', 'polite');
-        }
+    if (submitter) {
+        submitter.dataset.originalLabel = submitter.textContent;
+        submitter.dataset.wasDisabled = String(submitter.disabled);
+        submitter.textContent = submitter.dataset.loadingText || 'Submitting…';
+        submitter.classList.add('is-submitting');
+        submitter.setAttribute('aria-busy', 'true');
+        submitter.setAttribute('aria-live', 'polite');
+    }
 
-        const timer = window.setTimeout(() => {
-            if (form.isConnected) {
-                if ((form.matches('[data-logout-form]') || submitter?.dataset.loadingText === 'Signing out…') && submitter) {
-                    submitter.textContent = 'Still signing out…';
-                } else {
-                    setFormProgress(form, 'This is taking longer than usual. Please keep this page open.', 'slow');
-                }
+    const timer = window.setTimeout(() => {
+        if (form.isConnected) {
+            if ((form.matches('[data-logout-form]') || submitter?.dataset.loadingText === 'Signing out…') && submitter) {
+                submitter.textContent = 'Still signing out…';
+            } else {
+                setFormProgress(form, 'This is taking longer than usual. Please keep this page open.', 'slow');
             }
-        }, 4000);
+        }
+    }, 4000);
 
-        window.addEventListener('pagehide', () => window.clearTimeout(timer), { once: true });
+    window.addEventListener('pagehide', () => window.clearTimeout(timer), { once: true });
 
-        form.querySelectorAll('button[type="submit"], button:not([type])').forEach((button) => {
-            if (button !== submitter) {
-                button.dataset.wasDisabled = String(button.disabled);
-            }
-            button.disabled = true;
-        });
+    form.querySelectorAll('button[type="submit"], button:not([type])').forEach((button) => {
+        if (button !== submitter) {
+            button.dataset.wasDisabled = String(button.disabled);
+        }
+        button.disabled = true;
     });
 });
 

@@ -49,7 +49,7 @@ class AuthenticationTest extends TestCase
 
         $response->assertRedirect(route('student.dashboard'));
         $this->assertAuthenticatedAs(User::where('email', 'student001@example.com')->firstOrFail());
-        $this->get(route('student.dashboard'))->assertOk()->assertSee('Student dashboard');
+        $this->get(route('student.dashboard'))->assertOk()->assertSee('Your queue');
     }
 
     public function test_each_role_is_sent_to_its_own_dashboard(): void

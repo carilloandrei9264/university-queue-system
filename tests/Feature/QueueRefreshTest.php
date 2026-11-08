@@ -45,7 +45,7 @@ class QueueRefreshTest extends TestCase
             ->assertSee($ticket->code)
             ->assertDontSee($otherTicket->code)
             ->assertSee('People ahead')
-            ->assertSee('<strong>0</strong>', false);
+            ->assertSee('class="student-people-ahead">0</strong>', false);
 
         $queue->callNext(User::where('email', 'admission.staff@example.com')->firstOrFail());
 
@@ -53,7 +53,8 @@ class QueueRefreshTest extends TestCase
             ->get(route('student.queue-status'))
             ->assertOk()
             ->assertSee('Now serving')
-            ->assertDontSee('Cancel ticket');
+            ->assertSee('Please proceed to the Admission counter.')
+            ->assertDontSee('Cancel this ticket');
     }
 
     public function test_staff_refresh_is_limited_to_their_department(): void

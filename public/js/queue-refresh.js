@@ -6,7 +6,13 @@ document.querySelectorAll('[data-queue-refresh]').forEach((container) => {
 
     const announce = (message, kind) => {
         state.dataset.state = kind;
-        state.textContent = message;
+        const text = state.querySelector('[data-refresh-message]');
+
+        if (text) {
+            text.textContent = message;
+        } else {
+            state.textContent = message;
+        }
     };
 
     const refresh = async () => {

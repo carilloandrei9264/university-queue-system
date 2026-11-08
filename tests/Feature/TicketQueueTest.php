@@ -265,7 +265,11 @@ class TicketQueueTest extends TestCase
         $this->actingAs($student)
             ->get(route('student.dashboard'))
             ->assertOk()
-            ->assertSee($service->name);
+            ->assertSee($service->name)
+            ->assertSee('Welcome, '.$student->full_name)
+            ->assertSee('What do you need help with?')
+            ->assertSee('student-profile-menu', false)
+            ->assertSee('Join the queue');
 
         $this->actingAs($student)
             ->post(route('student.tickets.store'), ['service_id' => $service->id])
@@ -277,8 +281,11 @@ class TicketQueueTest extends TestCase
             ->get(route('student.dashboard'))
             ->assertOk()
             ->assertSee($ticket->code)
+            ->assertSee('Your queue ticket')
+            ->assertSee('You’re in the queue')
+            ->assertSee('Queue progress')
             ->assertSee('People ahead')
-            ->assertSee('<strong>0</strong>', false);
+            ->assertSee('class="student-people-ahead">0</strong>', false);
     }
 
     public function test_staff_queue_routes_run_call_and_completion_actions(): void
