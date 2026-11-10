@@ -2,7 +2,7 @@
 
 | Version | Status | Last updated |
 |---------|--------|--------------|
-| 0.1.0 | Draft | 2026-11-08 |
+| 0.1.0 | Draft | 2026-11-10 |
 
 This list focuses on the work needed to move the current local MVP toward a safe, useful Admission-office pilot. Do not treat the application as production-ready until the deployment-specific checks below have been completed.
 
@@ -12,12 +12,14 @@ The available XAMPP environment reports PHP 8.5.12, Laravel 13.40.0, and MariaDB
 
 The confirmed multi-window workflow is implemented: admins configure 1–20 windows per office and assign staff, each window can serve one ticket at a time, the display and student ticket show the serving window, and staff can take a break after completing or skipping the active ticket. Shrinking a window count or changing a staff assignment is blocked while a ticket is serving or remains recallable.
 
-The admin student directory now supports a create-only CSV roster workflow: download a template, upload and preview up to 500 UTF-8 rows, review duplicates and validation errors, confirm creation of ready rows, and export only roster fields. Imports do not overwrite existing records or reveal passwords. Each imported account's temporary password must be issued individually and delivered securely. NU approval for handling real student data remains required.
+The admin student directory now supports a create-only CSV roster workflow: download a template, upload and preview up to 500 UTF-8 rows, review duplicates and validation errors, confirm creation of ready rows, and export only roster fields. Imports do not overwrite existing records or reveal passwords. Each imported account's temporary password must be issued individually and delivered securely. Use only a university-authorized roster source and the approved credential-delivery process for real accounts.
+
+The supplied staging-server requirements are adopted as the planning baseline: a small VPS/cloud staging host, separate least-privilege database, production-like software versions, restricted access, sandbox integrations, disabled/redirected email, and synthetic or masked data only. The document's PostgreSQL option does not apply to the current MySQL/MariaDB-only application. NU has agreed to the privacy proposal for the pilot, provided the append-only activity log remains available to authorized administrators and records the actor (or System), action, affected record, and timestamp without secrets or unnecessary personal data. Log retention and reviewer access still need an operational decision.
 
 ## Priority 1: Validate the target database and queue behavior
 
 - [ ] Confirm the university server's supported PHP, Laravel-compatible extensions, and MySQL/MariaDB versions.
-- [ ] Configure a staging environment to match those versions and run migrations and seed-free startup there.
+- [ ] Configure a staging environment using the adopted [staging baseline](07-deployment.md), confirm the university's supported PHP/extensions and MySQL/MariaDB version, and run migrations and seed-free startup there.
 - [x] Run the automated suite and review database-specific behavior against the available local MariaDB 10.4.32 engine. Use [`phpunit.mariadb.xml`](../phpunit.mariadb.xml) for repeatable testing; the default PHPUnit profile still uses SQLite.
 - [x] Exercise simultaneous ticket creation and simultaneous “call next” actions against local MariaDB. Automated process-level regression tests confirm unique daily numbers, distinct ticket assignments across windows, and oldest-first queue assignment.
 - [x] No incompatibilities were found in the local MariaDB run; keep the regression tests and rerun them when the target engine is known.
@@ -32,11 +34,11 @@ The host-specific items remain a release gate: SQL behavior and supported versio
 - [ ] Confirm how staff will receive accounts and temporary passwords, and how lost access will be handled.
 - [x] Update the [manual test checklist](../tests/manual-checklist.md) for the current multi-window, break, and completion flows.
 
-## Priority 3: Agree on hosting, security, and operations
+## Priority 3: Confirm hosting, security, and operations
 
 - [ ] Confirm who owns server deployment, updates, database backups, restore testing, monitoring, and incident response.
 - [ ] Require HTTPS and agree on session/cookie settings, administrator access, and least-privilege database credentials.
-- [ ] Decide the account and password policy, credential delivery channel, audit-log access and retention period, and applicable privacy/data-retention rules.
+- [ ] Complete the agreed privacy proposal's operational details: authorize activity-log reviewers and set its retention/archival period and the related personal-data retention rules.
 - [ ] Verify production configuration disables demo logins and demo seeding, and document the approved local-account sign-in setting.
 - [ ] Document backup and restore steps, then rehearse them on staging.
 
