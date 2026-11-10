@@ -6,6 +6,8 @@
 
 This list focuses on the work needed to move the current local MVP toward a safe, useful Admission-office pilot. Do not treat the application as production-ready until the deployment-specific checks below have been completed.
 
+The 2026-11-10 project review identified the follow-up work below. These are planned improvements and verification tasks, not evidence that the production environment has been configured or that the checks have passed.
+
 ### Validation progress (local environments, 2026-11-08)
 
 The available XAMPP environment reports PHP 8.5.12, Laravel 13.40.0, and MariaDB 10.4.32. On the isolated MariaDB test database, all 59 tests passed, including migration/setup and both real multi-process concurrency tests. The SQLite suite passed 57 tests and skipped the two MariaDB-only concurrency tests. Seed-free `migrate:fresh` also completed on the disposable MariaDB schema. This validates local environments only; the university host and staging environment have not been confirmed.
@@ -20,10 +22,13 @@ The supplied staging-server requirements are adopted as the planning baseline: a
 
 - [ ] Confirm the university server's supported PHP, Laravel-compatible extensions, and MySQL/MariaDB versions.
 - [ ] Configure a staging environment using the adopted [staging baseline](07-deployment.md), confirm the university's supported PHP/extensions and MySQL/MariaDB version, and run migrations and seed-free startup there.
+- [ ] Once the production database engine and version are confirmed, rerun migrations, the full suite, and multi-process queue concurrency tests against a separate, disposable staging/test database using that engine.
 - [x] Run the automated suite and review database-specific behavior against the available local MariaDB 10.4.32 engine. Use [`phpunit.mariadb.xml`](../phpunit.mariadb.xml) for repeatable testing; the default PHPUnit profile still uses SQLite.
 - [x] Exercise simultaneous ticket creation and simultaneous “call next” actions against local MariaDB. Automated process-level regression tests confirm unique daily numbers, distinct ticket assignments across windows, and oldest-first queue assignment.
 - [x] No incompatibilities were found in the local MariaDB run; keep the regression tests and rerun them when the target engine is known.
-- [ ] Repeat migrations, the full test suite, and both concurrency tests against the university's actual staging database before the pilot.
+- [ ] Add direct unit tests for ticket status transitions, ticket-code formatting, and Manila queue-date boundaries, alongside the existing feature coverage.
+- [ ] Add pull-request CI to install from the lockfile and run the test suite and Pint; resolve any existing style-check failures before treating the CI check as a release signal.
+- [ ] Run Composer's locked dependency audit when package repository access is available and resolve or document any advisories.
 
 The host-specific items remain a release gate: SQL behavior and supported versions can differ between this local MariaDB and the database used by the university.
 
@@ -31,22 +36,28 @@ The host-specific items remain a release gate: SQL behavior and supported versio
 
 - [ ] Ask Admission staff to confirm the services offered, operating hours, ticket naming, and who can call or manage each queue.
 - [ ] Walk through the student and staff workflows with representative users; record confusing steps and accessibility issues.
+- [ ] Review the current interface at phone (including 360px), tablet, and desktop sizes, and validate ticket visibility, contrast, refresh/recovery, and viewing distance on the actual public display device.
+- [ ] Reduce repetitive screen-reader announcements during routine five-second polling; announce meaningful queue changes and status transitions instead.
+- [ ] Evaluate replacing the public board's five-second full-page refresh with an accessible targeted update; test on the target display before changing the current behavior.
 - [ ] Confirm how staff will receive accounts and temporary passwords, and how lost access will be handled.
 - [x] Update the [manual test checklist](../tests/manual-checklist.md) for the current multi-window, break, and completion flows.
 
 ## Priority 3: Confirm hosting, security, and operations
 
 - [ ] Confirm who owns server deployment, updates, database backups, restore testing, monitoring, and incident response.
-- [ ] Require HTTPS and agree on session/cookie settings, administrator access, and least-privilege database credentials.
+- [ ] Require HTTPS and least-privilege database credentials. Set `SESSION_SECURE_COOKIE=true` explicitly in every production environment and verify the resulting session cookie has `Secure`, `HttpOnly`, and the intended `SameSite` value.
+- [ ] Verify trusted-proxy HTTPS detection, production `APP_DEBUG=false`, demo-login/seeding restrictions, administrator access, and local-password sign-in configuration before enabling real accounts.
 - [ ] Complete the agreed privacy proposal's operational details: authorize activity-log reviewers and set its retention/archival period and the related personal-data retention rules.
-- [ ] Verify production configuration disables demo logins and demo seeding, and document the approved local-account sign-in setting.
+- [ ] Agree on temporary-password delivery and roster-file handling using university-approved secure channels before importing real student data.
 - [ ] Document backup and restore steps, then rehearse them on staging.
+- [ ] Review response security headers for the deployment (including `X-Content-Type-Options`, referrer policy, and a compatible Content Security Policy); enable HSTS only after HTTPS is confirmed and the host/domain scope is understood.
 
 Track open infrastructure questions in [deployment guidance](07-deployment.md) and decisions that affect scope in the relevant [ADRs](decisions/).
 
 ## Priority 4: Rehearse and run a limited pilot
 
 - [ ] Deploy a release candidate to staging and perform the full smoke, role/access, responsive layout, and queue-operation checks.
+- [ ] Verify the production session-cookie configuration in a production-like HTTPS/proxy setup before enabling local-password sign-in; keep the test as a deployment release check.
 - [ ] Train a small group of Admission staff and provision real pilot accounts through the approved secure process.
 - [ ] Agree on the pilot start/end dates, support contact, success measures, and a fallback to the office's existing queue process.
 - [ ] Start with one Admission service or a deliberately limited service set; monitor issues and collect staff/student feedback.
