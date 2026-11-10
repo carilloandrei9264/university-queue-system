@@ -79,6 +79,7 @@ class QueueRefreshTest extends TestCase
         $staff = User::where('email', 'admission.staff@example.com')->firstOrFail();
 
         $this->actingAs($student)->get(route('staff.queue-status'))->assertForbidden();
+        $this->flushSession();
         $this->actingAs($staff)->get(route('student.queue-status'))->assertForbidden();
     }
 

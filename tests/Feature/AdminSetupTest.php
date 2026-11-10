@@ -3,8 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Department;
-use App\Models\ServiceWindow;
 use App\Models\Service;
+use App\Models\ServiceWindow;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Services\TicketQueueService;
@@ -292,6 +292,7 @@ class AdminSetupTest extends TestCase
 
         foreach (['student', 'staff'] as $role) {
             $user = User::where('role', $role)->firstOrFail();
+            $this->flushSession();
 
             foreach ($routes as $route) {
                 $this->actingAs($user)->get($route)->assertForbidden();
@@ -409,6 +410,7 @@ class AdminSetupTest extends TestCase
 
         foreach (['student', 'staff'] as $role) {
             $user = User::where('role', $role)->firstOrFail();
+            $this->flushSession();
 
             $this->actingAs($user)
                 ->get(route('admin.students.index'))
@@ -513,6 +515,7 @@ class AdminSetupTest extends TestCase
 
         foreach (['student', 'staff'] as $role) {
             $user = User::where('role', $role)->firstOrFail();
+            $this->flushSession();
             $this->actingAs($user)->get(route('admin.activity.index'))->assertForbidden();
         }
 

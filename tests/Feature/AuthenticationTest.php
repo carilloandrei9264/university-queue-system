@@ -82,6 +82,7 @@ class AuthenticationTest extends TestCase
 
         foreach ($dashboards as $role => $allowedDashboard) {
             $user = User::where('role', $role)->firstOrFail();
+            $this->flushSession();
 
             foreach ($dashboards as $dashboard) {
                 if ($dashboard === $allowedDashboard) {
@@ -164,6 +165,23 @@ class AuthenticationTest extends TestCase
                 'password_confirmation' => 'temporary-account-password',
             ])
             ->assertSessionHasErrors('password');
+    }
+
+    public function test_sessions_with_an_old_password_hash_are_logged_out(): void
+    {
+        $student = User::where('email', 'student001@example.com')->firstOrFail();
+        $this->actingAs($student)
+            ->get(route('student.dashboard'))
+            ->assertOk();
+        $oldPasswordHash = $student->getAuthPassword();
+
+        $student->forceFill(['password' => 'a-new-secure-account-password'])->save();
+
+        $this->withSession(['password_hash_web' => $oldPasswordHash])
+            ->get(route('student.dashboard'))
+            ->assertRedirect(route('login'));
+
+        $this->assertGuest();
     }
 
     public function test_staff_without_a_department_cannot_open_the_staff_dashboard(): void
