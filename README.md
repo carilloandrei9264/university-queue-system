@@ -4,6 +4,8 @@ NU Queue-It is a Laravel-based queue management system for university offices. S
 
 **Project status:** Functional local MVP; not yet ready for a production or university pilot. See [the next steps](docs/10-next-steps.md) for the remaining validation and deployment work.
 
+A staging-server planning baseline is documented, but this does not mean a staging environment has been provisioned or validated. Staging must use a separate least-privilege database, restricted access, and synthetic or properly anonymized data; the current application supports MySQL/MariaDB, not PostgreSQL. See the [deployment guidance](docs/07-deployment.md).
+
 ## Features
 
 - Role-based student, office staff, and administrator accounts

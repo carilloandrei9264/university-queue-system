@@ -7,6 +7,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ### Added
 - Laravel 13 application foundation, MVP database migrations, and fake demo accounts for students, admin, and office staff.
+- A create-only student roster CSV workflow with upload preview, validation, duplicate detection, and password-free roster export.
 - Local-only demo login/logout, role-specific dashboards, and server-side role guards.
 - Terminal-only first administrator command and admin pages for departments, services, and staff.
 - Validation and feature tests for admin authorization, record management, and first-admin provisioning.
@@ -17,6 +18,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - Added a searchable, read-only admin activity log for account, department, service, and ticket mutations; audit rows are written transactionally and exclude credentials.
 - Added the forced password-change screen and access middleware; updated the account provisioning and database documentation for temporary credentials and audit records.
 - Recorded the decision to keep polling for now and evaluate Laravel Reverb only when pilot needs and hosting support justify WebSockets.
+
+### Changed
+- Documented a staging-server planning baseline, including production-like database compatibility, restricted access, isolated credentials, and synthetic or masked data only.
+- Clarified pilot activity-log access and retention decisions still required before real data is loaded.
 
 ## [0.0.0] - 2026-11-06
 
