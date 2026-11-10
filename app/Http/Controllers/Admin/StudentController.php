@@ -5,14 +5,18 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use App\Services\StudentRosterCsv;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StudentController extends Controller
 {
@@ -24,6 +28,16 @@ class StudentController extends Controller
         $search = trim($validated['search'] ?? '');
 
         $temporaryPassword = $request->session()->pull('temporary_password');
+        $previewToken = $request->session()->get('student_roster_preview_token');
+        $rosterPreview = is_string($previewToken)
+            ? Cache::store('file')->get($this->rosterPreviewCacheKey($request, $previewToken))
+            : null;
+
+        if (! is_array($rosterPreview) || ($rosterPreview['created_at'] ?? 0) < now()->subMinutes(15)->timestamp) {
+            $this->forgetRosterPreview($request);
+            $rosterPreview = null;
+        }
+
         $response = response()->view('admin.students', [
             'students' => User::query()
                 ->where('role', 'student')
@@ -39,9 +53,114 @@ class StudentController extends Controller
                 ->withQueryString(),
             'temporaryPassword' => $temporaryPassword,
             'temporaryAccountName' => $request->session()->pull('temporary_account_name'),
+            'rosterPreview' => $rosterPreview,
         ]);
 
-        return is_string($temporaryPassword) ? $response->header('Cache-Control', 'no-store, private') : $response;
+        return is_string($temporaryPassword) || is_array($rosterPreview)
+            ? $response->header('Cache-Control', 'no-store, private')
+            : $response;
+    }
+
+    public function template(): StreamedResponse
+    {
+        return response()->streamDownload(function (): void {
+            $output = fopen('php://output', 'wb');
+            fputcsv($output, ['student_id', 'full_name', 'email', 'course'], ',', '"', '');
+            fclose($output);
+        }, 'student-roster-template.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Cache-Control' => 'no-store, private',
+        ]);
+    }
+
+    public function previewImport(Request $request, StudentRosterCsv $roster): RedirectResponse
+    {
+        $this->forgetRosterPreview($request);
+        $request->validate([
+            'roster' => ['required', 'file', 'extensions:csv', 'max:5120'],
+        ]);
+
+        $preview = $roster->preview($request->file('roster'));
+        $previewToken = Str::uuid()->toString();
+        Cache::store('file')->put($this->rosterPreviewCacheKey($request, $previewToken), [
+            ...$preview,
+            'created_at' => now()->timestamp,
+        ], now()->addMinutes(15));
+        $request->session()->put('student_roster_preview_token', $previewToken);
+
+        return redirect()->route('admin.students.index')
+            ->with('status', 'CSV preview ready. Review the rows before importing.');
+    }
+
+    public function confirmImport(Request $request, StudentRosterCsv $roster, ActivityLogger $activityLogger): RedirectResponse
+    {
+        $previewToken = $request->session()->pull('student_roster_preview_token');
+        $preview = is_string($previewToken)
+            ? Cache::store('file')->pull($this->rosterPreviewCacheKey($request, $previewToken))
+            : null;
+
+        if (! is_array($preview) || ($preview['created_at'] ?? 0) < now()->subMinutes(15)->timestamp) {
+            return redirect()->route('admin.students.index')
+                ->withErrors(['roster' => 'The CSV preview expired. Upload the roster again to review it.']);
+        }
+
+        $rows = collect($preview['rows'] ?? [])
+            ->where('status', 'ready')
+            ->map(static fn (array $row): array => [
+                'student_id' => $row['values']['student_id'],
+                'full_name' => $row['values']['full_name'],
+                'email' => $row['values']['email'],
+                'course' => $row['values']['course'] ?: null,
+            ])
+            ->values()
+            ->all();
+
+        if ($rows === []) {
+            return redirect()->route('admin.students.index')
+                ->with('status', 'No new student records were imported. Fix the CSV errors and upload it again.');
+        }
+
+        try {
+            $importedCount = $roster->import($rows, $request->user(), $activityLogger);
+        } catch (ValidationException $exception) {
+            return redirect()->route('admin.students.index')
+                ->withErrors($exception->errors());
+        }
+
+        return redirect()->route('admin.students.index')
+            ->with('status', "{$importedCount} student accounts were imported. Passwords were not included or displayed; issue temporary passwords individually before sharing account access.");
+    }
+
+    public function cancelImport(Request $request): RedirectResponse
+    {
+        $this->forgetRosterPreview($request);
+
+        return redirect()->route('admin.students.index')->with('status', 'CSV preview discarded.');
+    }
+
+    public function export(Request $request, StudentRosterCsv $roster, ActivityLogger $activityLogger): StreamedResponse
+    {
+        $activityLogger->record($request->user(), 'student.roster_exported', 'student_roster', null);
+
+        return response()->streamDownload(function () use ($roster): void {
+            $output = fopen('php://output', 'wb');
+            fwrite($output, "\xEF\xBB\xBF");
+            fputcsv($output, ['student_id', 'full_name', 'email', 'course'], ',', '"', '');
+
+            foreach ($roster->exportRows() as $student) {
+                fputcsv($output, [
+                    $roster->safeExportValue($student->student_id),
+                    $roster->safeExportValue($student->full_name),
+                    $roster->safeExportValue($student->email),
+                    $roster->safeExportValue($student->course),
+                ], ',', '"', '');
+            }
+
+            fclose($output);
+        }, 'student-roster-'.now(config('app.timezone'))->format('Y-m-d').'.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Cache-Control' => 'no-store, private',
+        ]);
     }
 
     public function store(Request $request, ActivityLogger $activityLogger): RedirectResponse
@@ -127,5 +246,19 @@ class StudentController extends Controller
             'course' => ['nullable', 'string', 'max:255'],
             'is_active' => ['required', 'boolean'],
         ]);
+    }
+
+    private function forgetRosterPreview(Request $request): void
+    {
+        $previewToken = $request->session()->pull('student_roster_preview_token');
+
+        if (is_string($previewToken)) {
+            Cache::store('file')->forget($this->rosterPreviewCacheKey($request, $previewToken));
+        }
+    }
+
+    private function rosterPreviewCacheKey(Request $request, string $token): string
+    {
+        return "student-roster-preview:{$request->user()->id}:{$token}";
     }
 }

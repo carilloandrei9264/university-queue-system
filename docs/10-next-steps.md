@@ -12,6 +12,8 @@ The available XAMPP environment reports PHP 8.5.12, Laravel 13.40.0, and MariaDB
 
 The confirmed multi-window workflow is implemented: admins configure 1–20 windows per office and assign staff, each window can serve one ticket at a time, the display and student ticket show the serving window, and staff can take a break after completing or skipping the active ticket. Shrinking a window count or changing a staff assignment is blocked while a ticket is serving or remains recallable.
 
+The admin student directory now supports a create-only CSV roster workflow: download a template, upload and preview up to 500 UTF-8 rows, review duplicates and validation errors, confirm creation of ready rows, and export only roster fields. Imports do not overwrite existing records or reveal passwords. Each imported account's temporary password must be issued individually and delivered securely. NU approval for handling real student data remains required.
+
 ## Priority 1: Validate the target database and queue behavior
 
 - [ ] Confirm the university server's supported PHP, Laravel-compatible extensions, and MySQL/MariaDB versions.

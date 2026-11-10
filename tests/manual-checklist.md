@@ -15,10 +15,12 @@ Version: ____  Date: ____  Browser/device: ____
 - [ ] Staff completes the ticket; the student can join another service queue
 - [ ] Display board shows the call
 - [ ] Admin can add a department and a service
+- [ ] Admin downloads the student CSV template, previews a roster with valid/duplicate/invalid rows, imports only the ready records, and exports only approved roster fields
 
 ## Roles and access
 - [ ] Student cannot open staff or admin pages
 - [ ] Staff cannot see another department's tickets
+- [ ] Non-admin cannot import or export a student roster
 - [ ] Staff cannot call another ticket at their active window or manage another window's ticket
 - [ ] Logged-out user is redirected from every protected page
 - [ ] Display board works without logging in

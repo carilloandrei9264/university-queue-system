@@ -14,7 +14,7 @@ The first release for real users is a pilot that starts with **Admission (AMS)**
 
 | # | MVP item | Requirements | Pilot notes |
 |---|----------|--------------|-------------|
-| 1 | Admin setup for one department, its services, student and staff accounts | ADM-01, ADM-02, ADM-03, ADM-06, ADM-07, AUTH-03, AUTH-04, AUTH-07 | One department at first; admins provision accounts and assign roles. |
+| 1 | Admin setup for one department, its services, student and staff accounts, including safe roster CSV import/export | ADM-01, ADM-02, ADM-03, ADM-06, ADM-07, AUTH-03, AUTH-04, AUTH-07 | One department at first; admins provision accounts and assign roles. CSV import is previewed, create-only, and limited to approved roster fields. |
 | 2 | Student sign-in, ticket creation, ticket status viewing | AUTH-01, AUTH-02, AUTH-07, TKT-01, TKT-05, TKT-06 | Accounts are provisioned by an admin. University identity integration is added through a provider adapter when the institution's protocol is known. Status and people ahead refresh periodically. |
 | 3 | Staff limited to their assigned department and service window; multiple windows serve simultaneously | AUTH-05, STF-01, STF-02, STF-03, STF-04, STF-05, STF-06 | Admin configures 1–20 windows per office and assigns staff. A window handles one ticket at a time; staff complete or skip it before taking a break. |
 | 4 | Public display shows each window's serving ticket, readiness, or break state | DSP-01, DSP-02 | No student identity. Periodic refresh. |
@@ -92,7 +92,7 @@ Student, Staff (one department), Admin, Public screen (no login). See [00](00-pr
 | ADM-04 | Admin can read feedback, filtered by department. | S | Deferred past the MVP. |
 | ADM-05 | Admin sees basic stats: tickets served today, average wait, average service time, average rating. | S | Numbers come from recorded timestamps. Deferred past the MVP. |
 | ADM-06 | Removing a department, service or user means deactivating it, so history is kept. | M | Old tickets still show the original names. |
-| ADM-07 | Admin provisions and manages student accounts; staff account management remains restricted to staff roles and department assignment. | M | Student ID and email are unique; role changes are validated server-side and audited. |
+| ADM-07 | Admin provisions and manages student accounts individually or through a roster CSV; staff account management remains restricted to staff roles and department assignment. | M | Student ID and email are unique; CSV imports preview rows, create new records only, flag duplicates and invalid rows, and are audited. CSV exports contain only student ID, name, email, and course; no credentials or queue history. |
 | ADM-08 | Admin can read a searchable activity log of successful account, catalog, and ticket-changing transactions. | M | Each entry identifies actor (or system), action, target, time, and department where applicable. Log entries cannot be edited or deleted through the app; passwords, tokens and sensitive field values are never recorded. |
 
 ### Feedback (FBK)

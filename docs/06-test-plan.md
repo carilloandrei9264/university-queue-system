@@ -30,6 +30,9 @@ Write each case before building the feature. IDs link back to [requirements](02-
 | T-AUTH-07 | AUTH-07 | Create/reset a local account, sign in with its one-time password, change it, then inspect behavior in production and non-production configurations | Generated credential is shown once, cached responses are disabled, password is hashed and forced to change, no secret is logged or retrievable, demo accounts cannot sign in in production, and provisioned local accounts can sign in only when enabled |
 | T-AUTH-08 | AUTH-08 | Sign in through a configured test identity adapter using a stable external subject | Existing local role is preserved; unknown or inactive users are refused |
 | T-ADM-07 | ADM-07 | Admin creates and edits student accounts with unique identity data; try duplicates and role escalation | Valid student account is managed; duplicates and privilege escalation are rejected |
+| T-ADM-07a | ADM-07 | Preview/import a CSV containing valid, malformed, existing, and duplicate rows | Only previewed valid new records are created; duplicates/invalid rows are reported, preview expiry is enforced, and changes are audited |
+| T-ADM-07b | ADM-07, NFR-08 | Export a student roster and open formula-like roster text in a spreadsheet | Only student ID, name, email, and course are exported; formula-like values are neutralized; no credentials, queue data, or sensitive audit metadata are included |
+| T-ADM-07c | ADM-07 | As a non-admin, request roster template/export and submit import/confirm requests | Every operation is refused server-side |
 | T-TKT-02 | TKT-02 | Take tickets on two different days (change the test clock) | Number restarts at 001, per department |
 | T-TKT-03 | TKT-03 | Two students submit in the same department at the same moment | Different numbers, no gaps or duplicates |
 | T-TKT-04 | TKT-04 | Student with an active ticket tries to take another | Existing ticket shown, no new ticket |

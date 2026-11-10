@@ -74,6 +74,14 @@ Route::middleware(['auth', EnsurePasswordChange::class])->group(function (): voi
             ->name('staff.password.reset');
         Route::get('/students', [StudentController::class, 'index'])->name('students.index');
         Route::post('/students', [StudentController::class, 'store'])->name('students.store');
+        Route::get('/students/template', [StudentController::class, 'template'])->name('students.template');
+        Route::get('/students/export', [StudentController::class, 'export'])->name('students.export');
+        Route::post('/students/import/preview', [StudentController::class, 'previewImport'])
+            ->name('students.import.preview');
+        Route::post('/students/import/confirm', [StudentController::class, 'confirmImport'])
+            ->name('students.import.confirm');
+        Route::post('/students/import/cancel', [StudentController::class, 'cancelImport'])
+            ->name('students.import.cancel');
         Route::patch('/students/{student}', [StudentController::class, 'update'])->name('students.update');
         Route::post('/students/{student}/temporary-password', [StudentController::class, 'resetPassword'])
             ->name('students.password.reset');

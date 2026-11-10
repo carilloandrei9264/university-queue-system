@@ -7,7 +7,8 @@ NU Queue-It is a Laravel-based queue management system for university offices. S
 ## Features
 
 - Role-based student, office staff, and administrator accounts
-- Admin-managed departments, services, and accounts
+- Admin-managed departments, services, and accounts, including previewed student roster CSV import/export
+- Configurable service windows with staff assignment and per-window breaks
 - Generated temporary passwords for provisioned accounts, with a forced change at first sign-in
 - Student ticket creation and cancellation; staff call, complete, skip, and recall actions
 - Public queue display
@@ -15,7 +16,7 @@ NU Queue-It is a Laravel-based queue management system for university offices. S
 - Read-only administrator activity log
 - Responsive interface with loading, empty, offline, error, and validation feedback
 
-The current MVP uses local password accounts. University sign-in adapters and Reverb-based real-time updates are deferred until the pilot institution and hosting requirements are known.
+The current MVP uses local password accounts. CSV roster import creates new accounts only; it does not overwrite existing records or export passwords. Obtain authorization before handling real student data. Imported accounts require individual temporary-password issuance and secure delivery. University sign-in adapters and Reverb-based real-time updates are deferred until the pilot institution and hosting requirements are known.
 
 ## Technology
 
